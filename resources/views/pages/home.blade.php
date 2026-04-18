@@ -1,88 +1,152 @@
 @extends('layouts.app')
-@section('title', 'চিল ঘর — ঘরের স্বাদ, রেস্টুরেন্টে')
+@section('title', 'চিল ঘর — চা–কফির আড্ডা, ফাস্ট ফুডের আসল স্বাদ')
 
 @section('content')
 
-<section class="relative overflow-hidden">
-  <div class="absolute inset-0 bg-gradient-to-br from-primary/10 via-cream to-spice/10"></div>
+{{-- ===== HERO ===== --}}
+<section class="relative overflow-hidden bg-gradient-to-br from-charcoal via-[#3d2d28] to-primary">
+  {{-- bg glow --}}
+  <div class="pointer-events-none absolute inset-0">
+    <div class="absolute -top-32 left-1/4 h-96 w-96 rounded-full bg-primary/20 blur-3xl"></div>
+    <div class="absolute bottom-0 right-1/4 h-64 w-64 rounded-full bg-spice/20 blur-3xl"></div>
+  </div>
+
   <div class="relative mx-auto grid max-w-7xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-24">
-    <div class="animate-slide-up">
-      <span class="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-primary">
-        🌶️ ঐতিহ্যবাহী বাঙালি রেস্টুরেন্ট
+    {{-- Left --}}
+    <div class="animate-slide-up text-cream">
+      <span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-bold uppercase tracking-widest backdrop-blur-sm">
+        ☕ চা–কফির আড্ডা, ফাস্ট ফুডের আসল স্বাদ
       </span>
       <h1 class="mt-5 font-display text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
-        ঘরের স্বাদ,<br><span class="gradient-text">রেস্টুরেন্টে</span>
+        ঘরের স্বাদ,<br>
+        <span class="bg-gradient-to-r from-spice to-[#e8671a] bg-clip-text text-transparent">
+          রেস্টুরেন্টে
+        </span>
       </h1>
-      <p class="mt-5 max-w-lg text-base text-charcoal/70 sm:text-lg">
-        কাচ্চি বিরিয়ানি থেকে ইলিশ সরিষা — ৩০+ বছরের ঐতিহ্যবাহী রেসিপিতে রান্না করা প্রতিটি পদ। ফ্রেশ ইনগ্রেডিয়েন্ট, খাঁটি মসলা, মা-নানির হাতের স্বাদ।
+      <p class="mt-5 max-w-lg text-sm leading-relaxed text-cream/75 sm:text-base">
+        🌿 গ্রামীণ পরিবেশে শহরের আধুনিক ফিল। বনগ্রাম স্কুল ও কলেজের সামনে —
+        কাচ্চি বিরিয়ানি, ইলিশ সরিষা, ফুচকা থেকে চিকেন বার্গার। আপনাদেরই প্রিয় আড্ডাখানা!
       </p>
+
       <div class="mt-8 flex flex-wrap gap-3">
-        <a href="{{ route('menu.index') }}" class="inline-flex items-center gap-2 rounded-full bg-gradient-warm px-7 py-3.5 text-sm font-bold text-white shadow-warm transition hover:scale-105">
+        <a href="{{ route('menu.index') }}"
+           class="inline-flex items-center gap-2 rounded-full bg-gradient-warm px-7 py-3.5 text-sm font-bold text-white shadow-warm transition hover:scale-105 hover:shadow-[0_12px_30px_-8px_rgba(192,57,43,0.5)]">
           🍽️ মেনু দেখুন
         </a>
-        <a href="{{ route('about') }}" class="inline-flex items-center gap-2 rounded-full border border-charcoal/20 bg-white px-7 py-3.5 text-sm font-bold transition hover:border-primary hover:text-primary">
+        <a href="{{ route('about') }}"
+           class="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-7 py-3.5 text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/20">
           আমাদের গল্প →
         </a>
       </div>
-      <div class="mt-10 flex flex-wrap gap-6 text-sm">
-        <div><span class="font-display text-2xl font-bold gradient-text">৩০+</span><div class="text-xs text-charcoal/60">বছরের অভিজ্ঞতা</div></div>
-        <div><span class="font-display text-2xl font-bold gradient-text">৫০+</span><div class="text-xs text-charcoal/60">পদের মেনু</div></div>
-        <div><span class="font-display text-2xl font-bold gradient-text">১০K+</span><div class="text-xs text-charcoal/60">খুশি গ্রাহক</div></div>
+
+      <div class="mt-10 flex flex-wrap gap-8">
+        @foreach ([['৩০+', 'বছরের অভিজ্ঞতা'], ['৫০+', 'পদের মেনু'], ['১০K+', 'খুশি গ্রাহক'], ['⭐৪.৮', 'গ্রাহক রেটিং']] as [$val, $lbl])
+          <div>
+            <span class="font-display text-2xl font-bold bg-gradient-to-r from-spice to-[#e8671a] bg-clip-text text-transparent">{{ $val }}</span>
+            <div class="text-xs text-cream/55 mt-0.5">{{ $lbl }}</div>
+          </div>
+        @endforeach
       </div>
     </div>
-    <div class="relative animate-fade-in">
-      <div class="absolute -inset-4 rounded-3xl bg-gradient-warm opacity-20 blur-3xl"></div>
-      <img src="{{ asset('images/food/hero-feast.jpg') }}" alt="Bangladeshi feast"
-           class="relative aspect-square w-full rounded-3xl object-cover shadow-warm">
+
+    {{-- Right image --}}
+    <div class="relative animate-fade-in hidden lg:block">
+      <div class="absolute -inset-6 rounded-3xl bg-gradient-warm opacity-15 blur-3xl"></div>
+      <img src="{{ asset('images/food/hero.jpeg') }}" alt="চিল ঘর খাবার"
+           class="relative aspect-square w-full rounded-3xl object-cover shadow-warm"
+           onerror="this.src='https://placehold.co/600x600/faf6ef/c0392b?text=চিল+ঘর'">
+      {{-- floating badge --}}
+      <div class="absolute -bottom-4 -left-4 rounded-2xl bg-white px-4 py-3 shadow-warm">
+        <div class="font-display text-sm font-bold">🕐 ২০–৩০ মিনিট</div>
+        <div class="text-xs text-charcoal/55">দ্রুত ডেলিভারি</div>
+      </div>
+      <div class="absolute -right-4 top-8 rounded-2xl bg-spice px-4 py-3 shadow-warm">
+        <div class="font-display text-sm font-bold text-charcoal">🚚 ফ্রি ডেলিভারি</div>
+        <div class="text-xs text-charcoal/70">৫০০৳+ অর্ডারে</div>
+      </div>
     </div>
   </div>
 </section>
 
-<section class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-  <div class="flex items-end justify-between">
+{{-- ===== CATEGORIES ===== --}}
+<section class="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+  <div class="flex items-end justify-between mb-6">
     <div>
       <p class="text-xs font-bold uppercase tracking-widest text-primary">ক্যাটাগরি</p>
-      <h2 class="mt-1 font-display text-3xl font-bold sm:text-4xl">কী খাবেন আজ?</h2>
+      <h2 class="mt-1 font-display text-3xl font-bold sm:text-4xl">আপনার পছন্দ বেছে নিন</h2>
     </div>
     <a href="{{ route('menu.index') }}" class="hidden text-sm font-bold text-primary hover:underline sm:block">সব দেখুন →</a>
   </div>
-  <div class="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+
+  <div class="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-7">
     @foreach ($categories as $cat)
       <a href="{{ route('menu.index', ['category' => $cat->slug]) }}"
-         class="group flex flex-col items-center gap-2 rounded-2xl border border-charcoal/10 bg-white p-4 text-center shadow-soft transition hover:-translate-y-1 hover:border-primary hover:shadow-warm">
-        <div class="text-3xl transition group-hover:scale-110">{{ $cat->emoji }}</div>
+         class="group flex flex-col items-center gap-2.5 rounded-2xl border border-charcoal/10 bg-white p-4 text-center shadow-soft transition hover:-translate-y-1 hover:border-primary hover:shadow-warm">
+        <div class="text-3xl transition-transform duration-300 group-hover:scale-110">{{ $cat->emoji }}</div>
         <div class="text-xs font-bold leading-tight">{{ $cat->name }}</div>
       </a>
     @endforeach
   </div>
 </section>
 
-<section class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-  <div class="flex items-end justify-between">
+{{-- ===== POPULAR ITEMS ===== --}}
+<section class="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8">
+  <div class="flex items-end justify-between mb-6">
     <div>
       <p class="text-xs font-bold uppercase tracking-widest text-primary">🏆 জনপ্রিয়</p>
-      <h2 class="mt-1 font-display text-3xl font-bold sm:text-4xl">টপ পদসমূহ</h2>
+      <h2 class="mt-1 font-display text-3xl font-bold sm:text-4xl">আজকের সবচেয়ে বেশি অর্ডার</h2>
     </div>
     <a href="{{ route('menu.index') }}" class="text-sm font-bold text-primary hover:underline">সব দেখুন →</a>
   </div>
-  <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+
+  <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
     @foreach ($popular as $product)
       @include('partials.product-card', ['product' => $product])
     @endforeach
   </div>
 </section>
 
-<section class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+{{-- ===== FEATURES ===== --}}
+<section class="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8">
   <div class="grid gap-4 sm:grid-cols-3">
-    @foreach ([['🚚', 'ফ্রি ডেলিভারি', '৫০০ টাকার উপরে অর্ডারে'], ['⏱️', '২০-৩০ মিনিট', 'দ্রুত ডেলিভারি গ্যারান্টি'], ['💰', 'ক্যাশ অন ডেলিভারি', 'খাবার পেয়ে পেমেন্ট করুন']] as $item)
+    @foreach ([
+      ['🚚', 'ফ্রি ডেলিভারি', '৫০০ টাকার উপরে অর্ডারে'],
+      ['⏱️', '২০–৩০ মিনিট', 'দ্রুত ডেলিভারি গ্যারান্টি'],
+      ['💰', 'ক্যাশ অন ডেলিভারি', 'খাবার পেয়ে পেমেন্ট করুন'],
+    ] as [$icon, $title, $sub])
       <div class="flex items-center gap-4 rounded-2xl border border-charcoal/10 bg-white p-5 shadow-soft">
-        <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-warm text-2xl shadow-warm">{{ $item[0] }}</div>
+        <div class="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-warm text-2xl shadow-warm">
+          {{ $icon }}
+        </div>
         <div>
-          <div class="font-display font-bold">{{ $item[1] }}</div>
-          <div class="text-xs text-charcoal/60">{{ $item[2] }}</div>
+          <div class="font-display font-bold">{{ $title }}</div>
+          <div class="text-xs text-charcoal/55 mt-0.5">{{ $sub }}</div>
         </div>
       </div>
     @endforeach
+  </div>
+</section>
+
+{{-- ===== CTA BANNER ===== --}}
+<section class="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+  <div class="relative overflow-hidden rounded-3xl bg-gradient-warm px-8 py-10 shadow-warm">
+    <div class="pointer-events-none absolute right-0 top-0 h-64 w-64 rounded-full bg-white/10 -translate-y-1/2 translate-x-1/2"></div>
+    <div class="relative flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
+      <div class="text-white">
+        <h2 class="font-display text-2xl font-bold sm:text-3xl">পরিবারের সবার জন্য অর্ডার করুন</h2>
+        <p class="mt-2 text-sm text-white/80">ফ্যামিলি প্যাক, কর্পোরেট লাঞ্চ ও ইভেন্ট ক্যাটারিং পাওয়া যাচ্ছে।</p>
+      </div>
+      <div class="flex gap-3 flex-shrink-0">
+        <a href="{{ route('menu.index') }}"
+           class="rounded-full bg-white px-6 py-3 text-sm font-bold text-primary shadow-sm transition hover:scale-105">
+          মেনু দেখুন
+        </a>
+        <a href="{{ route('contact') }}"
+           class="rounded-full border-2 border-white/60 bg-transparent px-6 py-3 text-sm font-bold text-white transition hover:bg-white/15">
+          যোগাযোগ
+        </a>
+      </div>
+    </div>
   </div>
 </section>
 

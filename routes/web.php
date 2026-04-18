@@ -7,43 +7,68 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Admin\SettingsController;
 
 /* ---------- Public site ---------- */
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::get('/menu', [MenuController::class, 'index'])->name('menu.index');
-Route::get('/menu/{product}', [MenuController::class, 'show'])->name('menu.show');
+Route::get('/menu/{product:slug}', [MenuController::class, 'show'])->name('menu.show');
 
-Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-Route::post('/cart/add/{product}', [CartController::class, 'add'])->name('cart.add');
-Route::patch('/cart/update/{product}', [CartController::class, 'update'])->name('cart.update');
-Route::delete('/cart/remove/{product}', [CartController::class, 'remove'])->name('cart.remove');
-Route::delete('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
+// Cart
+Route::prefix('cart')->name('cart.')->group(function () {
+    Route::get('/', [CartController::class, 'index'])->name('index');
+    Route::post('/add/{product}', [CartController::class, 'add'])->name('add');
+    Route::patch('/update/{product}', [CartController::class, 'update'])->name('update');
+    Route::delete('/remove/{product}', [CartController::class, 'remove'])->name('remove');
+    Route::delete('/clear', [CartController::class, 'clear'])->name('clear');
+});
 
-Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
-Route::post('/wishlist/toggle/{product}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
-Route::post('/wishlist/move/{product}', [WishlistController::class, 'moveToCart'])->name('wishlist.move');
+// Wishlist
+Route::prefix('wishlist')->name('wishlist.')->group(function () {
+    Route::get('/', [WishlistController::class, 'index'])->name('index');
+    Route::post('/toggle/{product}', [WishlistController::class, 'toggle'])->name('toggle');
+    Route::post('/move/{product}', [WishlistController::class, 'moveToCart'])->name('move');
+});
 
-Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
-Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
-Route::get('/checkout/success/{order}', [CheckoutController::class, 'success'])->name('checkout.success');
+// Checkout (Guest & Logged-in both can access)
+Route::prefix('checkout')->name('checkout.')->group(function () {
+    Route::get('/', [CheckoutController::class, 'index'])->name('index');
+    Route::post('/', [CheckoutController::class, 'store'])->name('store');
+    Route::get('/success/{order}', [CheckoutController::class, 'success'])->name('success');
+});
 
+// Static Pages
 Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 
-/* ---------- Auth ---------- */
+/* ---------- Auth Routes ---------- */
 Route::middleware('guest')->group(function () {
-    Route::get('/login',  [AuthController::class, 'showLogin'])->name('login');
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
+    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+    Route::post('/register', [AuthController::class, 'register']);
 });
+
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
-/* ---------- Admin ---------- */
+/* ---------- Profile Routes (Logged-in Users) ---------- */
+Route::middleware('auth')->prefix('profile')->name('profile.')->group(function () {
+    Route::get('/', [ProfileController::class, 'index'])->name('index');
+    Route::get('/orders', [ProfileController::class, 'orders'])->name('orders');
+    Route::get('/orders/{order}', [ProfileController::class, 'showOrder'])->name('orders.show');
+    Route::get('/orders/{order}/print', [ProfileController::class, 'printInvoice'])->name('orders.print');
+    Route::patch('/update', [ProfileController::class, 'update'])->name('update');
+    Route::patch('/password', [ProfileController::class, 'updatePassword'])->name('password');
+});
+
+/* ---------- Admin Routes ---------- */
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -58,4 +83,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
     Route::patch('orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.status');
     Route::delete('orders/{order}', [AdminOrderController::class, 'destroy'])->name('orders.destroy');
+
+    Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
+    Route::patch('settings', [SettingsController::class, 'update'])->name('settings.update');
 });

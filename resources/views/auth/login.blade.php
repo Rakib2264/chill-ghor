@@ -55,14 +55,26 @@
         <button class="w-full rounded-full bg-gradient-warm py-3 text-sm font-bold text-white shadow-warm transition hover:scale-[1.02]">লগইন করুন →</button>
       </form>
 
-      <div class="mt-6 rounded-xl bg-cream p-4 text-xs text-charcoal/70">
+      {{-- ✅ Register Link Added Here --}}
+      <div class="mt-5 text-center">
+        <p class="text-sm text-charcoal/60">
+          অ্যাকাউন্ট নেই? 
+          <a href="{{ route('register') }}" class="font-bold text-primary hover:underline transition">
+            রেজিস্ট্রেশন করুন
+          </a>
+        </p>
+      </div>
+
+      <div class="mt-5 rounded-xl bg-cream p-4 text-xs text-charcoal/70">
         <div class="font-bold text-charcoal">🔑 ডিফল্ট অ্যাডমিন</div>
         <div class="mt-1">ইমেইল: <span class="font-mono">admin@biyaibari.com</span></div>
         <div>পাসওয়ার্ড: <span class="font-mono">password</span></div>
       </div>
     </div>
 
-    <div class="mt-4 text-center"><a href="{{ route('home') }}" class="text-xs font-bold text-charcoal/60 hover:text-primary">← মূল সাইটে ফিরে যান</a></div>
+    <div class="mt-4 text-center">
+      <a href="{{ route('home') }}" class="text-xs font-bold text-charcoal/60 hover:text-primary">← মূল সাইটে ফিরে যান</a>
+    </div>
   </div>
 </div>
 
