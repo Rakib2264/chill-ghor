@@ -50,7 +50,10 @@
             <td class="text-right font-bold">৳{{ number_format($o->total) }}</td>
             <td class="text-center">@include('admin.partials.status-badge', ['status' => $o->status])</td>
             <td class="py-3 pr-4 text-right">
-              <a href="{{ route('admin.orders.show', $o) }}" class="rounded-lg border border-charcoal/15 bg-white px-3 py-1.5 text-xs font-bold hover:border-primary hover:text-primary">দেখুন →</a>
+              <div class="flex items-center justify-end gap-2">
+                <a href="{{ route('admin.orders.show', $o) }}" class="rounded-lg border border-charcoal/15 bg-white px-3 py-1.5 text-xs font-bold hover:border-primary hover:text-primary">দেখুন →</a>
+                <a href="{{ route('admin.pos.invoice.print', $o) }}" target="_blank" class="rounded-lg border border-charcoal/15 bg-white px-3 py-1.5 text-xs font-bold hover:border-primary hover:text-primary">🖨️ প্রিন্ট</a>
+              </div>
             </td>
           </tr>
         @empty

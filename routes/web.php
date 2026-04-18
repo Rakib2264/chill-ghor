@@ -87,3 +87,14 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::patch('settings', [SettingsController::class, 'update'])->name('settings.update');
 });
+
+// Admin POS Routes
+Route::middleware(['auth', 'admin'])->prefix('admin/pos')->name('admin.pos.')->group(function () {
+    Route::get('/', [App\Http\Controllers\Admin\POSController::class, 'index'])->name('index');
+    Route::post('/', [App\Http\Controllers\Admin\POSController::class, 'store'])->name('store');
+    Route::get('/search', [App\Http\Controllers\Admin\POSController::class, 'search'])->name('search');
+    Route::post('/quick-product', [App\Http\Controllers\Admin\POSController::class, 'quickProduct'])->name('quick-product');
+    Route::get('/invoice/{order}/print', [App\Http\Controllers\Admin\POSController::class, 'printInvoice'])->name('invoice.print');
+    Route::patch('/order/{order}/status', [App\Http\Controllers\Admin\POSController::class, 'updateStatus'])->name('order.status');
+    Route::post('/order/{order}/payment', [App\Http\Controllers\Admin\POSController::class, 'addPayment'])->name('order.payment');
+});
