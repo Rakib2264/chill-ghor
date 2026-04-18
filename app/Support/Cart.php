@@ -53,11 +53,21 @@ class Cart
         $cart = self::get();
         if (empty($cart)) return collect();
 
-        $products = Product::whereIn('id', array_keys($cart))->get()->keyBy('id');
+        $products = Product::whereIn('id', array_keys($cart))
+            ->where('active', true)
+            ->get()
+            ->keyBy('id');
 
         return collect($cart)->map(function ($qty, $id) use ($products) {
             if (!isset($products[$id])) return null;
-            return ['product' => $products[$id], 'qty' => $qty];
+            return [
+                'product' => $products[$id], 
+                'qty' => $qty,
+                // For backward compatibility with old cart view
+                'name' => $products[$id]->name,
+                'price' => $products[$id]->price,
+                'image' => $products[$id]->image_url,
+            ];
         })->filter()->values();
     }
 

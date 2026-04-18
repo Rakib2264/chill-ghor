@@ -6,7 +6,7 @@
 
   <h1 class="font-display text-3xl font-bold mb-8 sm:text-4xl">🛒 আপনার কার্ট</h1>
 
-  @if (empty($items))
+  @if($items->isEmpty())
     <div class="flex flex-col items-center justify-center rounded-3xl border border-charcoal/10 bg-white py-24 text-center shadow-soft">
       <div class="text-7xl mb-5">🛒</div>
       <p class="font-display text-xl font-bold mb-2">কার্ট খালি আছে</p>
@@ -21,21 +21,17 @@
 
       {{-- Cart Items --}}
       <div class="space-y-3">
-        @foreach ($items as $id => $item)
-
+        @foreach ($items as $item)
           @php
-            $price = $item['price'] ?? 0;
-            $qty   = $item['qty'] ?? 1;
-            $name  = $item['name'] ?? 'Unknown';
-            $image = $item['image'] ?? null;
+            $product = $item['product'];
+            $qty = $item['qty'];
           @endphp
-
           <div class="flex items-center gap-4 rounded-2xl border border-charcoal/10 bg-white p-4 shadow-soft">
 
             {{-- Image --}}
             <div class="flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-cream text-4xl">
-              @if ($image)
-                <img src="{{ $image }}" alt="{{ $name }}" class="h-full w-full object-cover">
+              @if ($product->image)
+                <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="h-full w-full object-cover">
               @else
                 🍽️
               @endif
@@ -43,17 +39,18 @@
 
             {{-- Info --}}
             <div class="flex-1 min-w-0">
-              <h3 class="font-display font-bold truncate">{{ $name }}</h3>
+              <h3 class="font-display font-bold truncate">{{ $product->name }}</h3>
               <p class="text-sm text-charcoal/55 mt-0.5">
-                ৳{{ number_format($price) }} / পিস
+                ৳{{ number_format($product->price) }} / পিস
               </p>
             </div>
 
             {{-- Qty Controls --}}
-            <form action="{{ route('cart.update', $id) }}" method="POST" class="flex items-center gap-2">
-              @csrf @method('PATCH')
-
-              <button type="submit" name="action" value="dec"
+            <form action="{{ route('cart.update', $product) }}" method="POST" class="flex items-center gap-2">
+              @csrf
+              @method('PATCH')
+              <input type="hidden" name="qty" value="{{ $qty - 1 }}" id="dec-qty-{{ $product->id }}">
+              <button type="submit" onclick="if({{ $qty }} <= 1) return false;"
                 class="flex h-8 w-8 items-center justify-center rounded-full border border-charcoal/20 bg-cream font-bold text-charcoal hover:border-primary hover:bg-primary hover:text-white">
                 −
               </button>
@@ -62,7 +59,8 @@
                 {{ $qty }}
               </span>
 
-              <button type="submit" name="action" value="inc"
+              <input type="hidden" name="qty" value="{{ $qty + 1 }}" id="inc-qty-{{ $product->id }}">
+              <button type="submit"
                 class="flex h-8 w-8 items-center justify-center rounded-full border border-charcoal/20 bg-cream font-bold text-charcoal hover:border-primary hover:bg-primary hover:text-white">
                 +
               </button>
@@ -71,13 +69,14 @@
             {{-- Total --}}
             <div class="text-right min-w-[72px]">
               <div class="font-bold text-primary">
-                ৳{{ number_format($price * $qty) }}
+                ৳{{ number_format($product->price * $qty) }}
               </div>
             </div>
 
             {{-- Remove --}}
-            <form action="{{ route('cart.remove', $id) }}" method="POST">
-              @csrf @method('DELETE')
+            <form action="{{ route('cart.remove', $product) }}" method="POST">
+              @csrf
+              @method('DELETE')
               <button type="submit"
                 class="flex h-8 w-8 items-center justify-center rounded-full text-charcoal/30 hover:bg-red-50 hover:text-red-500">
                 ✕
@@ -90,7 +89,8 @@
         {{-- Clear Cart --}}
         <div class="flex justify-end pt-2">
           <form action="{{ route('cart.clear') }}" method="POST">
-            @csrf @method('DELETE')
+            @csrf
+            @method('DELETE')
             <button type="submit" class="text-xs font-bold text-charcoal/40 hover:text-red-500">
               🗑️ কার্ট খালি করুন
             </button>
@@ -104,8 +104,9 @@
         <h2 class="font-display text-lg font-bold mb-5">অর্ডার সারাংশ</h2>
 
         @php
-          $subtotal = $subtotal ?? 0;
-          $delivery_fee = $delivery_fee ?? 0;
+          $freeDeliveryMin = 500;
+          $deliveryCharge = 60;
+          $delivery_fee = $subtotal >= $freeDeliveryMin ? 0 : $deliveryCharge;
         @endphp
 
         <dl class="space-y-3 text-sm">
@@ -114,7 +115,7 @@
             <dd class="font-bold">৳{{ number_format($subtotal) }}</dd>
           </div>
 
-          <div class="flex justify-between text-green-600">
+          <div class="flex justify-between {{ $delivery_fee == 0 ? 'text-green-600' : '' }}">
             <dt>ডেলিভারি চার্জ</dt>
             <dd class="font-bold">
               {{ $delivery_fee == 0 ? 'ফ্রি' : '৳' . number_format($delivery_fee) }}
@@ -136,7 +137,7 @@
           </div>
         @else
           <div class="mt-4 rounded-xl bg-cream px-4 py-2.5 text-xs text-charcoal/55">
-            ৳{{ number_format(max(0, 500 - $subtotal)) }} বেশি অর্ডার করলে ফ্রি ডেলিভারি পাবেন।
+            আরও ৳{{ number_format(max(0, $freeDeliveryMin - $subtotal)) }} অর্ডার করলে ফ্রি ডেলিভারি পাবেন।
           </div>
         @endif
 
