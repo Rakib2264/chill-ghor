@@ -5,10 +5,6 @@
 
 {{-- ===== HERO ===== --}}
 <section class="relative overflow-hidden bg-gradient-to-br from-charcoal via-[#3d2d28] to-primary">
-  {{-- top promo strip --}}
-  <div class="relative z-10 bg-spice/95 py-2 text-center text-xs font-bold text-charcoal backdrop-blur">
-    🔥 আজকের অফার — ১০০০৳+ অর্ডারে অতিরিক্ত ১০% ছাড়! কোড: <span class="font-mono bg-charcoal text-spice px-2 py-0.5 rounded">CHILL10</span>
-  </div>
   {{-- bg glow --}}
   <div class="pointer-events-none absolute inset-0">
     <div class="absolute -top-32 left-1/4 h-96 w-96 rounded-full bg-primary/20 blur-3xl"></div>
