@@ -118,6 +118,7 @@
         @php
             $nav = [
                 ['route' => 'admin.dashboard', 'label' => 'ড্যাশবোর্ড', 'icon' => '📊'],
+                ['route' => 'admin.pos.index', 'label' => 'পিওএস', 'icon' => '💳'],
                 ['route' => 'admin.orders.index', 'label' => 'অর্ডার', 'icon' => '🧾'],
                 ['route' => 'admin.products.index', 'label' => 'পণ্য', 'icon' => '🍽️'],
                 ['route' => 'admin.categories.index', 'label' => 'ক্যাটাগরি', 'icon' => '🏷️'],

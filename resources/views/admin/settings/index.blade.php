@@ -3,7 +3,7 @@
 @section('header', 'সাইট সেটিংস')
 
 @section('content')
-<form action="{{ route('admin.settings.update') }}" method="POST" enctype="multipart/form-data">
+<form action="{{ route('admin.settings.update') }}" method="POST" enctype="multipart/form-data" id="settingsForm">
   @csrf
   @method('PATCH')
 
@@ -20,10 +20,14 @@
                 
                 @if($setting->type === 'image')
                   @if($setting->value)
-                    <img src="{{ asset($setting->value) }}" alt="{{ $setting->key }}" class="mt-2 h-16 w-16 object-contain border rounded">
+                    <div class="mt-2 relative">
+                      <img src="{{ asset($setting->value) }}" alt="{{ $setting->key }}" class="h-20 w-20 object-cover rounded-lg border">
+                      <input type="hidden" name="settings[{{ $setting->key }}][existing]" value="{{ $setting->value }}">
+                    </div>
                   @endif
                   <input type="file" name="settings[{{ $setting->key }}][file]" accept="image/*" 
                          class="mt-2 w-full rounded-xl border border-charcoal/15 bg-cream px-3 py-2 text-xs">
+                  <small class="text-xs text-charcoal/50">শুধুমাত্র নতুন ছবি আপলোড করতে চাইলে সিলেক্ট করুন</small>
                   
                 @elseif($setting->type === 'textarea')
                   <textarea name="settings[{{ $setting->key }}][value]" rows="3" 
@@ -41,13 +45,15 @@
                   <input type="number" name="settings[{{ $setting->key }}][value]" value="{{ $setting->value }}" 
                          class="mt-1 w-full rounded-xl border border-charcoal/15 bg-cream px-4 py-2.5 text-sm">
                   
+                @elseif($setting->type === 'json')
+                  <textarea name="settings[{{ $setting->key }}][value]" rows="4" 
+                            class="mt-1 w-full rounded-xl border border-charcoal/15 bg-cream px-4 py-2.5 text-sm font-mono">{{ $setting->value }}</textarea>
+                  <small class="text-xs text-charcoal/50">JSON ফরম্যাটে ডাটা লিখুন</small>
+                  
                 @else
                   <input type="text" name="settings[{{ $setting->key }}][value]" value="{{ $setting->value }}" 
                          class="mt-1 w-full rounded-xl border border-charcoal/15 bg-cream px-4 py-2.5 text-sm">
                 @endif
-                
-                <input type="hidden" name="settings[{{ $setting->key }}][key]" value="{{ $setting->key }}">
-                <input type="hidden" name="settings[{{ $setting->key }}][type]" value="{{ $setting->type }}">
               </label>
             </div>
           @endforeach
@@ -62,4 +68,12 @@
     </div>
   </div>
 </form>
+
+<script>
+// Prevent form submission if no changes to images
+document.getElementById('settingsForm').addEventListener('submit', function(e) {
+    // The form will submit normally, but images will only update if files are selected
+    console.log('Form submitted - images will only update if new files are selected');
+});
+</script>
 @endsection

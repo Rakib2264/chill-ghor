@@ -1,4 +1,5 @@
 <?php
+// Alternative approach - More robust
 
 namespace App\Http\Controllers\Admin;
 
@@ -6,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 
 class SettingsController extends Controller
 {
@@ -19,34 +21,73 @@ class SettingsController extends Controller
 
     public function update(Request $request)
     {
-        $data = $request->validate([
-            'settings'            => 'required|array',
-            'settings.*.key'      => 'required|string',
-            'settings.*.value'    => 'nullable',
-            'settings.*.type'     => 'required|string',
-        ]);
-
-        foreach ($data['settings'] as $settingData) {
-            $setting = Setting::where('key', $settingData['key'])->first();
+        $settings = $request->input('settings', []);
+        
+        foreach ($settings as $key => $settingData) {
+            $setting = Setting::where('key', $key)->first();
             
             if (!$setting) continue;
             
-            $value = $settingData['value'] ?? '';
-            
-            if ($setting->type === 'image' && $request->hasFile("settings.{$settingData['key']}.file")) {
-                $file = $request->file("settings.{$settingData['key']}.file");
-                
-                if ($setting->value && !str_starts_with($setting->value, 'http')) {
-                    Storage::disk('public')->delete(str_replace('storage/', '', $setting->value));
-                }
-                
-                $path = $file->store('settings', 'public');
-                $value = 'storage/' . $path;
+            // Handle different field types
+            switch ($setting->type) {
+                case 'image':
+                    $this->handleImageUpdate($request, $setting, $key);
+                    break;
+                    
+                case 'boolean':
+                    $value = isset($settingData['value']) ? '1' : '0';
+                    $setting->update(['value' => $value]);
+                    break;
+                    
+                case 'json':
+                    if (isset($settingData['value']) && !empty($settingData['value'])) {
+                        $setting->update(['value' => $settingData['value']]);
+                    }
+                    break;
+                    
+                default:
+                    if (isset($settingData['value'])) {
+                        $setting->update(['value' => $settingData['value']]);
+                    }
+                    break;
             }
             
-            $setting->update(['value' => $value]);
+            // Clear cache
+            Cache::forget("setting.{$setting->key}");
         }
-
+        
+        // Handle file uploads separately
+        if ($request->hasFile('settings')) {
+            foreach ($request->file('settings') as $key => $file) {
+                $setting = Setting::where('key', $key)->first();
+                if ($setting && $setting->type === 'image') {
+                    $this->handleImageUpdate($request, $setting, $key, true);
+                }
+            }
+        }
+        
         return back()->with('toast', '✅ সেটিংস আপডেট হয়েছে');
+    }
+    
+    private function handleImageUpdate($request, $setting, $key, $isFileUpload = false)
+    {
+        $fileKey = $isFileUpload ? $key : "settings.{$key}.file";
+        
+        if ($request->hasFile($fileKey)) {
+            $file = $request->file($fileKey);
+            
+            // Delete old image if exists and not default
+            if ($setting->value && !str_contains($setting->value, 'default') && 
+                !str_contains($setting->value, 'logo.png') && 
+                !str_contains($setting->value, 'hero.jpeg')) {
+                $oldPath = str_replace('storage/', '', $setting->value);
+                if (Storage::disk('public')->exists($oldPath)) {
+                    Storage::disk('public')->delete($oldPath);
+                }
+            }
+            
+            $path = $file->store('settings', 'public');
+            $setting->update(['value' => 'storage/' . $path]);
+        }
     }
 }

@@ -1,24 +1,26 @@
 <?php
+
 // routes/web.php - Cleaned and Fixed
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\MenuController;
-use App\Http\Controllers\CartController;
-use App\Http\Controllers\WishlistController;
-use App\Http\Controllers\CheckoutController;
-use App\Http\Controllers\PageController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AddressController;
-use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
+use App\Http\Controllers\Admin\ContactController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\DeliveryZoneController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Admin\PosController;
+use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
-use App\Http\Controllers\Admin\ContactController;
-use App\Http\Controllers\Admin\DeliveryZoneController;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\MenuController;
+use App\Http\Controllers\PageController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\WishlistController;
+use Illuminate\Support\Facades\Route;
 
 /* ---------- Public site ---------- */
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -115,10 +117,15 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('contacts', [ContactController::class, 'index'])->name('contacts.index');
     Route::get('contacts/{contact}', [ContactController::class, 'show'])->name('contacts.show');
     Route::delete('contacts/{contact}', [ContactController::class, 'destroy'])->name('contacts.destroy');
-    
+
     // Delivery Zones Management
     Route::get('delivery-zones', [DeliveryZoneController::class, 'index'])->name('delivery-zones.index');
     Route::post('delivery-zones', [DeliveryZoneController::class, 'store'])->name('delivery-zones.store');
     Route::patch('delivery-zones/{zone}', [DeliveryZoneController::class, 'update'])->name('delivery-zones.update');
     Route::delete('delivery-zones/{zone}', [DeliveryZoneController::class, 'destroy'])->name('delivery-zones.destroy');
+    // POS System
+    Route::get('/pos', [PosController::class, 'index'])->name('pos.index');
+    Route::post('/pos/order', [PosController::class, 'storeOrder'])->name('pos.store');
+    Route::get('/pos/search', [PosController::class, 'searchProducts'])->name('pos.search');
+    Route::get('/pos/product/{id}', [PosController::class, 'getProduct'])->name('pos.product');
 });
