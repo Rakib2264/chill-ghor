@@ -4,6 +4,9 @@
 @section('content')
 <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
 
+  @include('pages.profile._tabs', ['active' => 'orders'])
+
+
   <div class="mb-8">
     <p class="text-xs font-bold uppercase tracking-widest text-primary">অর্ডার</p>
     <h1 class="mt-1 font-display text-3xl font-bold">আমার অর্ডার হিস্টরি</h1>

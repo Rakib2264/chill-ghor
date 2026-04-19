@@ -1,12 +1,14 @@
 <?php
-
+// app/Http/Controllers/CheckoutController.php (Updated)
 namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Setting;
+use App\Models\DeliveryZone;
 use App\Support\Cart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 
@@ -18,84 +20,169 @@ class CheckoutController extends Controller
         if ($items->isEmpty()) {
             return redirect()->route('cart.index')->with('toast', 'কার্ট খালি আছে');
         }
-        
-        $subtotal = Cart::subtotal();
-        $freeDeliveryMin = (int) Setting::get('free_delivery_min', 500);
-        $deliveryCharge = (int) Setting::get('delivery_charge', 60);
-        $deliveryFee = $subtotal >= $freeDeliveryMin ? 0 : $deliveryCharge;
-        $total = $subtotal + $deliveryFee;
 
         $user = Auth::user();
-        $prefill = $user ? [
-            'customer_name' => $user->name,
-            'phone'         => $user->phone,
-            'address'       => $user->address,
-        ] : [];
+        $addresses = $user ? $user->addresses()->orderByDesc('is_default')->latest()->get() : collect();
+        $defaultAddress = $addresses->firstWhere('is_default', true) ?? $addresses->first();
 
-        return view('pages.checkout', compact('items', 'subtotal', 'deliveryFee', 'total', 'prefill'));
+        $deliveryZones = DeliveryZone::where('is_active', true)->get();
+        $totals = $this->calculateTotals(null, null);
+
+        return view('pages.checkout', [
+            'items' => $items,
+            'subtotal' => $totals['subtotal'],
+            'deliveryFee' => $totals['deliveryFee'],
+            'total' => $totals['total'],
+            'addresses' => $addresses,
+            'defaultAddress' => $defaultAddress,
+            'deliveryZones' => $deliveryZones,
+        ]);
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'customer_name'  => 'required|string|max:120',
-            'phone'          => 'required|string|max:30',
-            'address'        => 'required|string|max:500',
-            'notes'          => 'nullable|string|max:500',
+            'customer_name' => 'required|string|max:120',
+            'phone' => 'required|string|max:30',
+            'address' => 'required|string|max:500',
+            'area' => 'nullable|string|max:120',
+            'delivery_zone' => 'nullable|string|max:100',
+            'notes' => 'nullable|string|max:500',
             'payment_method' => 'required|in:cod,bkash,nagad',
-            'trx_id'         => 'required_if:payment_method,bkash,nagad|nullable|string|min:6|max:50',
-        ], [
-            'trx_id.required_if' => 'মোবাইল পেমেন্টের জন্য Transaction ID আবশ্যক',
+            'trx_id' => 'required_if:payment_method,bkash,nagad|nullable|string|min:6|max:50',
+            'address_id' => 'nullable|exists:addresses,id',
         ]);
 
         $items = Cart::items();
         if ($items->isEmpty()) {
-            return redirect()->route('cart.index')->with('toast', 'কার্ট খালি আছে');
+            return response()->json(['ok' => false, 'message' => 'কার্ট খালি আছে'], 422);
         }
 
-        $subtotal = Cart::subtotal();
-        $freeDeliveryMin = (int) Setting::get('free_delivery_min', 500);
-        $deliveryCharge = (int) Setting::get('delivery_charge', 60);
-        $deliveryFee = $subtotal >= $freeDeliveryMin ? 0 : $deliveryCharge;
-        $total = $subtotal + $deliveryFee;
+        // Calculate delivery fee based on zone
+        $zone = DeliveryZone::where('zone_name', $data['delivery_zone'] ?? '')->first();
+        $totals = $this->calculateTotals($data['area'] ?? null, $zone);
 
-        $order = DB::transaction(function () use ($data, $items, $subtotal, $deliveryFee, $total) {
+        $order = DB::transaction(function () use ($data, $items, $totals, $zone) {
             $order = Order::create([
-                'user_id'        => Auth::id(),
-                'invoice_no'     => 'CH-' . strtoupper(Str::random(8)),
-                'customer_name'  => $data['customer_name'],
-                'phone'          => $data['phone'],
-                'address'        => $data['address'],
-                'notes'          => $data['notes'] ?? null,
+                'user_id' => Auth::id(),
+                'invoice_no' => 'CH-' . strtoupper(Str::random(8)),
+                'customer_name' => $data['customer_name'],
+                'phone' => $data['phone'],
+                'address' => $data['address'],
+                'area' => $data['area'] ?? null,
+                'delivery_zone' => $zone->zone_name ?? null,
+                'notes' => $data['notes'] ?? null,
                 'payment_method' => $data['payment_method'],
-                'trx_id'         => $data['trx_id'] ?? null,
-                'subtotal'       => $subtotal,
-                'delivery_fee'   => $deliveryFee,
-                'total'          => $total,
-                'status'         => 'pending',
+                'trx_id' => $data['trx_id'] ?? null,
+                'subtotal' => $totals['subtotal'],
+                'delivery_fee' => $totals['deliveryFee'],
+                'total' => $totals['total'],
+                'status' => 'pending',
             ]);
 
             foreach ($items as $item) {
                 $order->items()->create([
-                    'product_id'   => $item['product']->id,
+                    'product_id' => $item['product']->id,
                     'product_name' => $item['product']->name,
-                    'price'        => $item['product']->price,
-                    'quantity'     => $item['qty'],
-                    'line_total'   => $item['product']->price * $item['qty'],
+                    'price' => $item['product']->price,
+                    'quantity' => $item['qty'],
+                    'line_total' => $item['product']->price * $item['qty'],
                 ]);
             }
-
             return $order;
         });
 
         Cart::clear();
 
+        // Send email notification
+        try {
+            Mail::send('emails.order-confirmation', ['order' => $order], function ($m) use ($order) {
+                $m->to($order->customer_email ?? 'customer@example.com')
+                    ->subject('অর্ডার কনফার্মেশন - ' . $order->invoice_no);
+            });
+        } catch (\Exception $e) {
+            // Log email error but don't break the flow
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'ok' => true,
+                'order_id' => $order->id,
+                'invoice_no' => $order->invoice_no,
+                'redirect' => route('checkout.success', $order),
+                'message' => '🎉 অর্ডার সফল হয়েছে!',
+            ]);
+        }
+
         return redirect()->route('checkout.success', $order)
             ->with('toast', '🎉 অর্ডার সফল হয়েছে! ইনভয়েস: ' . $order->invoice_no);
+    }
+
+    public function calculateDeliveryFee($area, $subtotal)
+    {
+        $zone = DeliveryZone::where('zone_name', 'like', "%{$area}%")->first();
+        if (!$zone) {
+            $zone = DeliveryZone::where('zone_name', 'বনগ্রাম এলাকা')->first();
+        }
+
+        if ($subtotal >= $zone->min_order_for_free) {
+            return 0;
+        }
+        return $zone->delivery_charge;
+    }
+
+    protected function calculateTotals($area = null, $zone = null)
+    {
+        $subtotal = Cart::subtotal();
+        $deliveryFee = 0;
+
+        if ($zone) {
+            $deliveryFee = $subtotal >= $zone->min_order_for_free ? 0 : $zone->delivery_charge;
+        } else {
+            $defaultZone = DeliveryZone::where('is_active', true)->first();
+            $deliveryFee = $subtotal >= ($defaultZone->min_order_for_free ?? 500) ? 0 : ($defaultZone->delivery_charge ?? 60);
+        }
+
+        return [
+            'subtotal' => $subtotal,
+            'deliveryFee' => $deliveryFee,
+            'total' => $subtotal + $deliveryFee,
+        ];
     }
 
     public function success(Order $order)
     {
         return view('pages.checkout-success', compact('order'));
+    }
+
+    public function getDeliveryFee(Request $request)
+    {
+        $area = $request->input('area');
+        $subtotal = (int) $request->input('subtotal', 0);
+
+        // Find matching delivery zone
+        $zone = \App\Models\DeliveryZone::where('zone_name', 'like', "%{$area}%")->first();
+
+        if (!$zone) {
+            $zone = \App\Models\DeliveryZone::where('is_active', true)->first();
+        }
+
+        if (!$zone) {
+            return response()->json([
+                'delivery_fee' => 60,
+                'total' => $subtotal + 60,
+                'zone' => 'ডিফল্ট',
+                'free_min' => 500,
+            ]);
+        }
+
+        $deliveryFee = $subtotal >= $zone->min_order_for_free ? 0 : $zone->delivery_charge;
+
+        return response()->json([
+            'delivery_fee' => $deliveryFee,
+            'total' => $subtotal + $deliveryFee,
+            'zone' => $zone->zone_name,
+            'free_min' => $zone->min_order_for_free,
+        ]);
     }
 }

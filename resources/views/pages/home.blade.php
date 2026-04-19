@@ -5,6 +5,10 @@
 
 {{-- ===== HERO ===== --}}
 <section class="relative overflow-hidden bg-gradient-to-br from-charcoal via-[#3d2d28] to-primary">
+  {{-- top promo strip --}}
+  <div class="relative z-10 bg-spice/95 py-2 text-center text-xs font-bold text-charcoal backdrop-blur">
+    🔥 আজকের অফার — ১০০০৳+ অর্ডারে অতিরিক্ত ১০% ছাড়! কোড: <span class="font-mono bg-charcoal text-spice px-2 py-0.5 rounded">CHILL10</span>
+  </div>
   {{-- bg glow --}}
   <div class="pointer-events-none absolute inset-0">
     <div class="absolute -top-32 left-1/4 h-96 w-96 rounded-full bg-primary/20 blur-3xl"></div>
@@ -39,7 +43,7 @@
         </a>
       </div>
 
-      <div class="mt-10 flex flex-wrap gap-8">
+      <div class="mt-10 flex flex-wrap gap-6 sm:gap-10">
         @foreach ([['৩০+', 'বছরের অভিজ্ঞতা'], ['৫০+', 'পদের মেনু'], ['১০K+', 'খুশি গ্রাহক'], ['⭐৪.৮', 'গ্রাহক রেটিং']] as [$val, $lbl])
           <div>
             <span class="font-display text-2xl font-bold bg-gradient-to-r from-spice to-[#e8671a] bg-clip-text text-transparent">{{ $val }}</span>
@@ -53,7 +57,7 @@
     <div class="relative animate-fade-in hidden lg:block">
       <div class="absolute -inset-6 rounded-3xl bg-gradient-warm opacity-15 blur-3xl"></div>
       <img src="{{ asset('images/food/hero.jpeg') }}" alt="চিল ঘর খাবার"
-           class="relative aspect-square w-full rounded-3xl object-cover shadow-warm"
+           class="relative aspect-square w-full rounded-3xl object-cover shadow-warm ring-4 ring-white/10 transition duration-500 hover:scale-[1.02]"
            onerror="this.src='https://placehold.co/600x600/faf6ef/c0392b?text=চিল+ঘর'">
       {{-- floating badge --}}
       <div class="absolute -bottom-4 -left-4 rounded-2xl bg-white px-4 py-3 shadow-warm">

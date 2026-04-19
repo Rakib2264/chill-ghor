@@ -1,4 +1,5 @@
 <?php
+// routes/web.php - Cleaned and Fixed
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
@@ -8,20 +9,23 @@ use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\AddressController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Admin\ContactController;
+use App\Http\Controllers\Admin\DeliveryZoneController;
 
 /* ---------- Public site ---------- */
 Route::get('/', [HomeController::class, 'index'])->name('home');
-
 Route::get('/menu', [MenuController::class, 'index'])->name('menu.index');
 Route::get('/menu/{product:slug}', [MenuController::class, 'show'])->name('menu.show');
 
-// Cart
+// Cart (supports both JSON & form requests)
 Route::prefix('cart')->name('cart.')->group(function () {
     Route::get('/', [CartController::class, 'index'])->name('index');
     Route::post('/add/{product}', [CartController::class, 'add'])->name('add');
@@ -37,28 +41,31 @@ Route::prefix('wishlist')->name('wishlist.')->group(function () {
     Route::post('/move/{product}', [WishlistController::class, 'moveToCart'])->name('move');
 });
 
-// Checkout (Guest & Logged-in both can access)
+// Checkout
 Route::prefix('checkout')->name('checkout.')->group(function () {
     Route::get('/', [CheckoutController::class, 'index'])->name('index');
     Route::post('/', [CheckoutController::class, 'store'])->name('store');
     Route::get('/success/{order}', [CheckoutController::class, 'success'])->name('success');
 });
 
+// Delivery fee API (must be before the static routes)
+Route::get('/checkout/delivery-fee', [CheckoutController::class, 'getDeliveryFee'])->name('checkout.delivery-fee');
+
 // Static Pages
 Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
+Route::post('/contact', [PageController::class, 'contactStore'])->name('contact.store');
 
-/* ---------- Auth Routes ---------- */
+/* ---------- Auth ---------- */
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
 });
-
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
-/* ---------- Profile Routes (Logged-in Users) ---------- */
+/* ---------- Profile ---------- */
 Route::middleware('auth')->prefix('profile')->name('profile.')->group(function () {
     Route::get('/', [ProfileController::class, 'index'])->name('index');
     Route::get('/orders', [ProfileController::class, 'orders'])->name('orders');
@@ -66,35 +73,52 @@ Route::middleware('auth')->prefix('profile')->name('profile.')->group(function (
     Route::get('/orders/{order}/print', [ProfileController::class, 'printInvoice'])->name('orders.print');
     Route::patch('/update', [ProfileController::class, 'update'])->name('update');
     Route::patch('/password', [ProfileController::class, 'updatePassword'])->name('password');
+
+    // Addresses
+    Route::get('/addresses', [AddressController::class, 'index'])->name('addresses.index');
+    Route::post('/addresses', [AddressController::class, 'store'])->name('addresses.store');
+    Route::patch('/addresses/{address}', [AddressController::class, 'update'])->name('addresses.update');
+    Route::delete('/addresses/{address}', [AddressController::class, 'destroy'])->name('addresses.destroy');
+    Route::patch('/addresses/{address}/default', [AddressController::class, 'setDefault'])->name('addresses.default');
 });
 
-/* ---------- Admin Routes ---------- */
+/* ---------- Admin ---------- */
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Products
     Route::resource('products', AdminProductController::class)->except('show');
 
+    // Categories
     Route::get('categories', [AdminCategoryController::class, 'index'])->name('categories.index');
     Route::post('categories', [AdminCategoryController::class, 'store'])->name('categories.store');
     Route::patch('categories/{category}', [AdminCategoryController::class, 'update'])->name('categories.update');
     Route::delete('categories/{category}', [AdminCategoryController::class, 'destroy'])->name('categories.destroy');
 
+    // Orders
     Route::get('orders', [AdminOrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
     Route::patch('orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.status');
     Route::delete('orders/{order}', [AdminOrderController::class, 'destroy'])->name('orders.destroy');
 
+    // Users
+    Route::get('users', [AdminUserController::class, 'index'])->name('users.index');
+    Route::patch('users/{user}/admin', [AdminUserController::class, 'toggleAdmin'])->name('users.admin');
+    Route::delete('users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
+
+    // Settings
     Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::patch('settings', [SettingsController::class, 'update'])->name('settings.update');
-});
 
-// Admin POS Routes
-Route::middleware(['auth', 'admin'])->prefix('admin/pos')->name('admin.pos.')->group(function () {
-    Route::get('/', [App\Http\Controllers\Admin\POSController::class, 'index'])->name('index');
-    Route::post('/', [App\Http\Controllers\Admin\POSController::class, 'store'])->name('store');
-    Route::get('/search', [App\Http\Controllers\Admin\POSController::class, 'search'])->name('search');
-    Route::post('/quick-product', [App\Http\Controllers\Admin\POSController::class, 'quickProduct'])->name('quick-product');
-    Route::get('/invoice/{order}/print', [App\Http\Controllers\Admin\POSController::class, 'printInvoice'])->name('invoice.print');
-    Route::patch('/order/{order}/status', [App\Http\Controllers\Admin\POSController::class, 'updateStatus'])->name('order.status');
-    Route::post('/order/{order}/payment', [App\Http\Controllers\Admin\POSController::class, 'addPayment'])->name('order.payment');
+    // Contacts Management
+    Route::get('contacts', [ContactController::class, 'index'])->name('contacts.index');
+    Route::get('contacts/{contact}', [ContactController::class, 'show'])->name('contacts.show');
+    Route::delete('contacts/{contact}', [ContactController::class, 'destroy'])->name('contacts.destroy');
+    
+    // Delivery Zones Management
+    Route::get('delivery-zones', [DeliveryZoneController::class, 'index'])->name('delivery-zones.index');
+    Route::post('delivery-zones', [DeliveryZoneController::class, 'store'])->name('delivery-zones.store');
+    Route::patch('delivery-zones/{zone}', [DeliveryZoneController::class, 'update'])->name('delivery-zones.update');
+    Route::delete('delivery-zones/{zone}', [DeliveryZoneController::class, 'destroy'])->name('delivery-zones.destroy');
 });

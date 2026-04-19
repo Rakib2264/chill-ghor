@@ -4,6 +4,9 @@
 @section('content')
 <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
 
+  @include('pages.profile._tabs', ['active' => 'profile'])
+
+
   <div class="flex items-center justify-between mb-8">
     <div>
       <p class="text-xs font-bold uppercase tracking-widest text-primary">প্রোফাইল</p>
