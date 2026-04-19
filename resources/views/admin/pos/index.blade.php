@@ -128,8 +128,7 @@
 <script>
 function posSystem() {
   return {
-    products: @json($products->map(fn($p) => ['id'=>$p->id,'name'=>$p->name,'price'=>(int)$p->price,'image'=>$p->image_url ?? null,'category'=>$p->category->slug ?? null])),
-    filtered: [],
+products: @json($productsData),    filtered: [],
     search: '',
     activeCat: null,
     cart: [],
