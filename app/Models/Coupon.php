@@ -8,8 +8,8 @@ class Coupon extends Model
 {
     protected $fillable = [
         'code', 'type', 'value', 'min_order',
-        'usage_limit', 'used_count', 'expires_at', 'is_active',  // ← ঠিক করা হয়েছে
-        'max_discount', 'label'  // ← নতুন ফিল্ড যোগ করা হয়েছে
+        'usage_limit', 'used_count', 'expires_at', 'is_active', 
+        'max_discount', 'label'  
     ];
 
     protected $casts = [
@@ -39,19 +39,16 @@ class Coupon extends Model
         return $disc;
     }
     
-    // হেল্পার মেথড: ইউজ কাউন্ট বাড়ানোর জন্য
     public function incrementUsage(): void
     {
         $this->increment('used_count');
     }
     
-    // স্কোপ: শুধু সক্রিয় কুপন
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
     }
     
-    // স্কোপ: মেয়াদ উত্তীর্ণ নয়
     public function scopeNotExpired($query)
     {
         return $query->where(function($q) {

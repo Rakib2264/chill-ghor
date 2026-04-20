@@ -10,7 +10,7 @@ class CouponSeeder extends Seeder
     public function run(): void
     {
         Coupon::updateOrCreate(['code' => 'WELCOME10'], [
-            'type' => 'percent',        // ← 'percentage' না, 'percent' ব্যবহার করুন
+            'type' => 'percent',    
             'value' => 10,
             'min_order' => 300,
             'is_active' => true,
@@ -38,7 +38,7 @@ class CouponSeeder extends Seeder
         ]);
         
         Coupon::updateOrCreate(['code' => 'SUMMER20'], [
-            'type' => 'percent',        // ← 'percent' ব্যবহার করুন
+            'type' => 'percent',       
             'value' => 20,
             'min_order' => 1000,
             'is_active' => true,
