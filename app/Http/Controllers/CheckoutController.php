@@ -28,11 +28,17 @@ class CheckoutController extends Controller
         $deliveryZones = DeliveryZone::where('is_active', true)->get();
         $totals = $this->calculateTotals(null, null);
 
+        $couponSession = session('coupon');
+        $discount = (int) ($couponSession['discount'] ?? 0);
+        $couponCode = $couponSession['code'] ?? null;
+
         return view('pages.checkout', [
             'items' => $items,
             'subtotal' => $totals['subtotal'],
             'deliveryFee' => $totals['deliveryFee'],
-            'total' => $totals['total'],
+            'total' => max(0, $totals['total'] - $discount),
+            'discount' => $discount,
+            'couponCode' => $couponCode,
             'addresses' => $addresses,
             'defaultAddress' => $defaultAddress,
             'deliveryZones' => $deliveryZones,
@@ -62,7 +68,13 @@ class CheckoutController extends Controller
         $zone = DeliveryZone::where('zone_name', $data['delivery_zone'] ?? '')->first();
         $totals = $this->calculateTotals($data['area'] ?? null, $zone);
 
-        $order = DB::transaction(function () use ($data, $items, $totals, $zone) {
+        // Apply coupon if present in session
+        $couponSession = session('coupon');
+        $couponCode = $couponSession['code'] ?? null;
+        $discount = (int) ($couponSession['discount'] ?? 0);
+        $finalTotal = max(0, $totals['total'] - $discount);
+
+        $order = DB::transaction(function () use ($data, $items, $totals, $zone, $couponCode, $discount, $finalTotal, $couponSession) {
             $order = Order::create([
                 'user_id' => Auth::id(),
                 'invoice_no' => 'CH-' . strtoupper(Str::random(8)),
@@ -76,9 +88,16 @@ class CheckoutController extends Controller
                 'trx_id' => $data['trx_id'] ?? null,
                 'subtotal' => $totals['subtotal'],
                 'delivery_fee' => $totals['deliveryFee'],
-                'total' => $totals['total'],
+                'total' => $finalTotal,
+                'coupon_code' => $couponCode,
+                'discount' => $discount,
                 'status' => 'pending',
             ]);
+
+            // Increment coupon usage
+            if (!empty($couponSession['coupon_id'])) {
+                \App\Models\Coupon::where('id', $couponSession['coupon_id'])->increment('used_count');
+            }
 
             foreach ($items as $item) {
                 $order->items()->create([
@@ -93,6 +112,7 @@ class CheckoutController extends Controller
         });
 
         Cart::clear();
+        session()->forget('coupon');
 
         // Send email notification
         try {

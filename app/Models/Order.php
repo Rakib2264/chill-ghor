@@ -12,6 +12,7 @@ class Order extends Model
         'user_id',
         'invoice_no',
         'customer_name',
+        'customer_email',
         'phone',
         'address',
         'notes',
@@ -20,9 +21,11 @@ class Order extends Model
         'subtotal',
         'delivery_fee',
         'total',
+        'coupon_code',
+        'discount',
         'status',
         'area',
-        'delivery_zone'
+        'delivery_zone',
     ];
 
     public function items(): HasMany

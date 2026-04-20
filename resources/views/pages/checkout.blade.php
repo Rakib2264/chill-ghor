@@ -65,6 +65,9 @@
       <dl class="space-y-2 text-sm">
         <div class="flex justify-between"><dt class="text-charcoal/60">সাব-টোটাল</dt><dd class="font-bold">৳<span x-text="subtotal.toLocaleString()"></span></dd></div>
         <div class="flex justify-between text-green-600"><dt>ডেলিভারি</dt><dd class="font-bold" x-text="deliveryFee === 0 ? 'ফ্রি' : '৳' + deliveryFee.toLocaleString()"></dd></div>
+        @if (!empty($discount) && $discount > 0)
+        <div class="flex justify-between text-green-600"><dt>কুপন ({{ $couponCode }})</dt><dd class="font-bold">−৳{{ number_format($discount) }}</dd></div>
+        @endif
         <div class="flex justify-between border-t border-charcoal/10 pt-3"><dt class="font-display font-bold">মোট</dt><dd class="font-bold text-lg text-primary">৳<span x-text="total.toLocaleString()"></span></dd></div>
       </dl>
       <button @click="step = 2" :disabled="items.length === 0"
@@ -151,6 +154,9 @@
           <dt>ডেলিভারি চার্জ</dt>
           <dd class="font-bold" x-text="deliveryFee === 0 ? 'ফ্রি' : '৳' + deliveryFee.toLocaleString()"></dd>
         </div>
+        @if (!empty($discount) && $discount > 0)
+        <div class="flex justify-between text-green-600"><dt>কুপন ({{ $couponCode }})</dt><dd class="font-bold">−৳{{ number_format($discount) }}</dd></div>
+        @endif
         <div class="flex justify-between border-t border-charcoal/10 pt-3"><dt class="font-display font-bold">মোট</dt><dd class="font-bold text-lg text-primary">৳<span x-text="total.toLocaleString()"></span></dd></div>
       </dl>
       <div class="mt-4 rounded-xl bg-cream p-3 text-xs text-charcoal/65" x-show="deliveryFee > 0">
@@ -221,6 +227,9 @@
           <dt>ডেলিভারি</dt>
           <dd class="font-bold" x-text="deliveryFee === 0 ? 'ফ্রি' : '৳' + deliveryFee.toLocaleString()"></dd>
         </div>
+        @if (!empty($discount) && $discount > 0)
+        <div class="flex justify-between text-green-600"><dt>কুপন ({{ $couponCode }})</dt><dd class="font-bold">−৳{{ number_format($discount) }}</dd></div>
+        @endif
         <div class="flex justify-between border-t border-charcoal/10 pt-3"><dt class="font-display font-bold">মোট</dt><dd class="font-bold text-lg text-primary">৳<span x-text="total.toLocaleString()"></span></dd></div>
       </dl>
     </div>

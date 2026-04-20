@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Review;
 use Illuminate\Http\Request;
 
 class MenuController extends Controller
@@ -39,11 +40,20 @@ class MenuController extends Controller
 
     public function show(Product $product)
     {
+        $product->load(['reviews.user', 'category']);
+
         $related = Product::where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
             ->where('active', true)
             ->take(4)->get();
 
-        return view('pages.product', compact('product', 'related'));
+        // Has the current user already reviewed?
+        $userReview = null;
+        if (auth()->check()) {
+            $userReview = Review::where('product_id', $product->id)
+                ->where('user_id', auth()->id())->first();
+        }
+
+        return view('pages.product', compact('product', 'related', 'userReview'));
     }
 }

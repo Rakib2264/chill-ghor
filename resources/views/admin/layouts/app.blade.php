@@ -122,10 +122,11 @@
                 ['route' => 'admin.orders.index', 'label' => 'অর্ডার', 'icon' => '🧾'],
                 ['route' => 'admin.products.index', 'label' => 'পণ্য', 'icon' => '🍽️'],
                 ['route' => 'admin.categories.index', 'label' => 'ক্যাটাগরি', 'icon' => '🏷️'],
+                ['route' => 'admin.coupons.index', 'label' => 'কুপন', 'icon' => '🎟️'],
                 ['route' => 'admin.users.index', 'label' => 'ব্যবহারকারী', 'icon' => '👥'],
-                ['route' => 'admin.settings.index', 'label' => 'সেটিংস', 'icon' => '⚙️'],
                 ['route' => 'admin.contacts.index', 'label' => 'বার্তা', 'icon' => '✉️'],
                 ['route' => 'admin.delivery-zones.index', 'label' => 'ডেলিভারি জোন', 'icon' => '🚚'],
+                ['route' => 'admin.settings.index', 'label' => 'সেটিংস', 'icon' => '⚙️'],
             ];
         @endphp
 

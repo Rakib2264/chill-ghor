@@ -1,10 +1,11 @@
 <?php
 
-// routes/web.php - Cleaned and Fixed
+// routes/web.php
 
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\ContactController;
+use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DeliveryZoneController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
@@ -15,10 +16,12 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\CouponController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\WishlistController;
 use Illuminate\Support\Facades\Route;
 
@@ -27,13 +30,17 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/menu', [MenuController::class, 'index'])->name('menu.index');
 Route::get('/menu/{product:slug}', [MenuController::class, 'show'])->name('menu.show');
 
-// Cart (supports both JSON & form requests)
+// Cart (form + JSON)
 Route::prefix('cart')->name('cart.')->group(function () {
     Route::get('/', [CartController::class, 'index'])->name('index');
     Route::post('/add/{product}', [CartController::class, 'add'])->name('add');
     Route::patch('/update/{product}', [CartController::class, 'update'])->name('update');
     Route::delete('/remove/{product}', [CartController::class, 'remove'])->name('remove');
     Route::delete('/clear', [CartController::class, 'clear'])->name('clear');
+
+    // Coupons
+    Route::post('/coupon', [CouponController::class, 'apply'])->name('coupon.apply');
+    Route::delete('/coupon', [CouponController::class, 'remove'])->name('coupon.remove');
 });
 
 // Wishlist
@@ -50,8 +57,13 @@ Route::prefix('checkout')->name('checkout.')->group(function () {
     Route::get('/success/{order}', [CheckoutController::class, 'success'])->name('success');
 });
 
-// Delivery fee API (must be before the static routes)
 Route::get('/checkout/delivery-fee', [CheckoutController::class, 'getDeliveryFee'])->name('checkout.delivery-fee');
+
+// Reviews (auth only)
+Route::middleware('auth')->group(function () {
+    Route::post('/reviews/{product}', [ReviewController::class, 'store'])->name('reviews.store');
+    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
+});
 
 // Static Pages
 Route::get('/about', [PageController::class, 'about'])->name('about');
@@ -76,7 +88,6 @@ Route::middleware('auth')->prefix('profile')->name('profile.')->group(function (
     Route::patch('/update', [ProfileController::class, 'update'])->name('update');
     Route::patch('/password', [ProfileController::class, 'updatePassword'])->name('password');
 
-    // Addresses
     Route::get('/addresses', [AddressController::class, 'index'])->name('addresses.index');
     Route::post('/addresses', [AddressController::class, 'store'])->name('addresses.store');
     Route::patch('/addresses/{address}', [AddressController::class, 'update'])->name('addresses.update');
@@ -86,46 +97,45 @@ Route::middleware('auth')->prefix('profile')->name('profile.')->group(function (
 
 /* ---------- Admin ---------- */
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Products
+    // POS
+    Route::get('/pos', [PosController::class, 'index'])->name('pos.index');
+    Route::post('/pos/order', [PosController::class, 'storeOrder'])->name('pos.store');
+    Route::get('/pos/search', [PosController::class, 'searchProducts'])->name('pos.search');
+    Route::get('/pos/product/{id}', [PosController::class, 'getProduct'])->name('pos.product');
+
     Route::resource('products', AdminProductController::class)->except('show');
 
-    // Categories
     Route::get('categories', [AdminCategoryController::class, 'index'])->name('categories.index');
     Route::post('categories', [AdminCategoryController::class, 'store'])->name('categories.store');
     Route::patch('categories/{category}', [AdminCategoryController::class, 'update'])->name('categories.update');
     Route::delete('categories/{category}', [AdminCategoryController::class, 'destroy'])->name('categories.destroy');
 
-    // Orders
     Route::get('orders', [AdminOrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
     Route::patch('orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.status');
     Route::delete('orders/{order}', [AdminOrderController::class, 'destroy'])->name('orders.destroy');
 
-    // Users
     Route::get('users', [AdminUserController::class, 'index'])->name('users.index');
     Route::patch('users/{user}/admin', [AdminUserController::class, 'toggleAdmin'])->name('users.admin');
     Route::delete('users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
 
-    // Settings
     Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::patch('settings', [SettingsController::class, 'update'])->name('settings.update');
 
-    // Contacts Management
     Route::get('contacts', [ContactController::class, 'index'])->name('contacts.index');
     Route::get('contacts/{contact}', [ContactController::class, 'show'])->name('contacts.show');
     Route::delete('contacts/{contact}', [ContactController::class, 'destroy'])->name('contacts.destroy');
 
-    // Delivery Zones Management
     Route::get('delivery-zones', [DeliveryZoneController::class, 'index'])->name('delivery-zones.index');
     Route::post('delivery-zones', [DeliveryZoneController::class, 'store'])->name('delivery-zones.store');
     Route::patch('delivery-zones/{zone}', [DeliveryZoneController::class, 'update'])->name('delivery-zones.update');
     Route::delete('delivery-zones/{zone}', [DeliveryZoneController::class, 'destroy'])->name('delivery-zones.destroy');
-    // POS System
-    Route::get('/pos', [PosController::class, 'index'])->name('pos.index');
-    Route::post('/pos/order', [PosController::class, 'storeOrder'])->name('pos.store');
-    Route::get('/pos/search', [PosController::class, 'searchProducts'])->name('pos.search');
-    Route::get('/pos/product/{id}', [PosController::class, 'getProduct'])->name('pos.product');
+
+    // Coupons
+    Route::get('coupons', [AdminCouponController::class, 'index'])->name('coupons.index');
+    Route::post('coupons', [AdminCouponController::class, 'store'])->name('coupons.store');
+    Route::patch('coupons/{coupon}', [AdminCouponController::class, 'update'])->name('coupons.update');
+    Route::delete('coupons/{coupon}', [AdminCouponController::class, 'destroy'])->name('coupons.destroy');
 });
