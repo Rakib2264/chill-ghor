@@ -27,7 +27,8 @@
         খুঁজুন
       </button>
     </form>
-    <a href="{{ route('admin.products.create') }}"
+    <a href="{{ route('admin.products.trash') }}" class="rounded-full bg-cream px-4 py-2 text-sm font-bold">🗑️ ট্র্যাশ ({{ $trashCount ?? 0 }})</a>
+        <a href="{{ route('admin.products.create') }}"
        class="rounded-full bg-gradient-warm px-5 py-2 text-sm font-bold text-white shadow-warm transition hover:scale-105">
       ➕ নতুন পণ্য
     </a>

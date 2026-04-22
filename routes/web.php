@@ -8,9 +8,12 @@ use App\Http\Controllers\Admin\ContactController;
 use App\Http\Controllers\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DeliveryZoneController;
+use App\Http\Controllers\Admin\EmailController as AdminEmailController;
+use App\Http\Controllers\Admin\EmailTemplateController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\PosController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\AuthController;
@@ -33,9 +36,9 @@ Route::get('/menu/{product:slug}', [MenuController::class, 'show'])->name('menu.
 // Cart (form + JSON)
 Route::prefix('cart')->name('cart.')->group(function () {
     Route::get('/', [CartController::class, 'index'])->name('index');
-    Route::post('/add/{product}', [CartController::class, 'add'])->name('add');
-    Route::patch('/update/{product}', [CartController::class, 'update'])->name('update');
-    Route::delete('/remove/{product}', [CartController::class, 'remove'])->name('remove');
+    Route::post('/add/{product:id}', [CartController::class, 'add'])->name('add');
+    Route::patch('/update/{product:id}', [CartController::class, 'update'])->name('update');
+    Route::delete('/remove/{product:id}', [CartController::class, 'remove'])->name('remove');
     Route::delete('/clear', [CartController::class, 'clear'])->name('clear');
 
     // Coupons
@@ -46,8 +49,8 @@ Route::prefix('cart')->name('cart.')->group(function () {
 // Wishlist
 Route::prefix('wishlist')->name('wishlist.')->group(function () {
     Route::get('/', [WishlistController::class, 'index'])->name('index');
-    Route::post('/toggle/{product}', [WishlistController::class, 'toggle'])->name('toggle');
-    Route::post('/move/{product}', [WishlistController::class, 'moveToCart'])->name('move');
+    Route::post('/toggle/{product:id}', [WishlistController::class, 'toggle'])->name('toggle');
+    Route::post('/move/{product:id}', [WishlistController::class, 'moveToCart'])->name('move');
 });
 
 // Checkout
@@ -61,7 +64,7 @@ Route::get('/checkout/delivery-fee', [CheckoutController::class, 'getDeliveryFee
 
 // Reviews (auth only)
 Route::middleware('auth')->group(function () {
-    Route::post('/reviews/{product}', [ReviewController::class, 'store'])->name('reviews.store');
+    Route::post('/reviews/{product:id}', [ReviewController::class, 'store'])->name('reviews.store');
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
 });
 
@@ -105,6 +108,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/pos/search', [PosController::class, 'searchProducts'])->name('pos.search');
     Route::get('/pos/product/{id}', [PosController::class, 'getProduct'])->name('pos.product');
 
+    Route::get('products/trash', [AdminProductController::class, 'trash'])->name('products.trash');
+    Route::patch('products/{id}/restore', [AdminProductController::class, 'restore'])->name('products.restore');
+    Route::delete('products/{id}/force', [AdminProductController::class, 'forceDelete'])->name('products.force');
     Route::resource('products', AdminProductController::class)->except('show');
 
     Route::get('categories', [AdminCategoryController::class, 'index'])->name('categories.index');
@@ -138,4 +144,19 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('coupons', [AdminCouponController::class, 'store'])->name('coupons.store');
     Route::patch('coupons/{coupon}', [AdminCouponController::class, 'update'])->name('coupons.update');
     Route::delete('coupons/{coupon}', [AdminCouponController::class, 'destroy'])->name('coupons.destroy');
+
+    Route::get('reviews', [AdminReviewController::class, 'index'])->name('reviews.index');
+    Route::patch('reviews/{review}/toggle', [AdminReviewController::class, 'toggle'])->name('reviews.toggle');
+    Route::delete('reviews/{review}', [AdminReviewController::class, 'destroy'])->name('reviews.destroy');
+
+    Route::get('email-templates', [EmailTemplateController::class, 'index'])->name('email-templates.index');
+    Route::get('email-templates/create', [EmailTemplateController::class, 'create'])->name('email-templates.create');
+    Route::post('email-templates', [EmailTemplateController::class, 'store'])->name('email-templates.store');
+    Route::get('email-templates/{template}/edit', [EmailTemplateController::class, 'edit'])->name('email-templates.edit');
+    Route::patch('email-templates/{template}', [EmailTemplateController::class, 'update'])->name('email-templates.update');
+    Route::delete('email-templates/{template}', [EmailTemplateController::class, 'destroy'])->name('email-templates.destroy');
+
+    Route::get('emails/send', [AdminEmailController::class, 'create'])->name('emails.send');
+    Route::post('emails/send', [AdminEmailController::class, 'send'])->name('emails.send.store');
+    Route::get('emails/history', [AdminEmailController::class, 'history'])->name('emails.history');
 });

@@ -2,6 +2,9 @@
 // app/Http/Controllers/CheckoutController.php (Updated)
 namespace App\Http\Controllers;
 
+use App\Mail\GenericMail;
+use App\Models\EmailLog;
+use App\Models\EmailTemplate;
 use App\Models\Order;
 use App\Models\Setting;
 use App\Models\DeliveryZone;
@@ -114,14 +117,32 @@ class CheckoutController extends Controller
         Cart::clear();
         session()->forget('coupon');
 
-        // Send email notification
+        // Send order confirmation email using admin-managed template
         try {
-            Mail::send('emails.order-confirmation', ['order' => $order], function ($m) use ($order) {
-                $m->to($order->customer_email ?? 'customer@example.com')
-                    ->subject('অর্ডার কনফার্মেশন - ' . $order->invoice_no);
-            });
-        } catch (\Exception $e) {
-            // Log email error but don't break the flow
+            $recipient = $order->user?->email ?? $order->customer_email ?? null;
+            if ($recipient) {
+                $rendered = EmailTemplate::render('order.confirmation', [
+                    'name' => $order->customer_name,
+                    'order_no' => $order->invoice_no,
+                    'total' => number_format($order->total),
+                ]);
+                if ($rendered) {
+                    $log = EmailLog::create([
+                        'email_template_id' => $rendered['template_id'] ?? null,
+                        'recipient_email' => $recipient,
+                        'recipient_name' => $order->customer_name,
+                        'subject' => $rendered['subject'],
+                        'audience' => 'order_confirmation',
+                        'status' => 'pending',
+                        'sent_by' => Auth::id(),
+                    ]);
+                    Mail::to($recipient)->send(new GenericMail($rendered['subject'], $rendered['body']));
+                    $log->update(['status' => 'sent', 'sent_at' => now()]);
+                }
+            }
+        } catch (\Throwable $e) {
+            if (isset($log)) $log->update(['status' => 'failed', 'error_message' => $e->getMessage()]);
+            \Log::warning('Order email failed: ' . $e->getMessage());
         }
 
         if ($request->wantsJson()) {

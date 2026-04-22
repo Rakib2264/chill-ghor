@@ -24,8 +24,9 @@ class ProductController extends Controller
 
         $products  = $query->paginate(15)->withQueryString();
         $categories = Category::orderBy('sort_order')->get();
+        $trashCount = Product::onlyTrashed()->count();
 
-        return view('admin.products.index', compact('products', 'categories'));
+        return view('admin.products.index', compact('products', 'categories', 'trashCount'));
     }
 
     public function create()
@@ -73,9 +74,28 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
-        $this->deleteOldImage($product->image);
         $product->delete();
-        return back()->with('toast', '🗑️ পণ্য মুছে ফেলা হয়েছে');
+        return back()->with('toast', '🗑️ পণ্য ট্র্যাশে পাঠানো হয়েছে');
+    }
+
+    public function trash()
+    {
+        $products = Product::onlyTrashed()->with('category')->latest('deleted_at')->paginate(15);
+        return view('admin.products.trash', compact('products'));
+    }
+
+    public function restore($id)
+    {
+        Product::onlyTrashed()->findOrFail($id)->restore();
+        return back()->with('toast', '♻️ পণ্য রিস্টোর হয়েছে');
+    }
+
+    public function forceDelete($id)
+    {
+        $product = Product::onlyTrashed()->findOrFail($id);
+        $this->deleteOldImage($product->image);
+        $product->forceDelete();
+        return back()->with('toast', '🔥 পণ্য চিরতরে মুছে ফেলা হয়েছে');
     }
 
     private function validateData(Request $request): array
