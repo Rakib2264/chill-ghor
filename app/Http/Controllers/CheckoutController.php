@@ -1,19 +1,21 @@
 <?php
+
 // app/Http/Controllers/CheckoutController.php (Updated)
+
 namespace App\Http\Controllers;
 
 use App\Mail\GenericMail;
+use App\Models\Coupon;
+use App\Models\DeliveryZone;
 use App\Models\EmailLog;
 use App\Models\EmailTemplate;
 use App\Models\Order;
-use App\Models\Setting;
-use App\Models\DeliveryZone;
 use App\Support\Cart;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Auth;
 
 class CheckoutController extends Controller
 {
@@ -53,6 +55,7 @@ class CheckoutController extends Controller
         $data = $request->validate([
             'customer_name' => 'required|string|max:120',
             'phone' => 'required|string|max:30',
+            'email' => 'required|email',
             'address' => 'required|string|max:500',
             'area' => 'nullable|string|max:120',
             'delivery_zone' => 'nullable|string|max:100',
@@ -80,8 +83,9 @@ class CheckoutController extends Controller
         $order = DB::transaction(function () use ($data, $items, $totals, $zone, $couponCode, $discount, $finalTotal, $couponSession) {
             $order = Order::create([
                 'user_id' => Auth::id(),
-                'invoice_no' => 'CH-' . strtoupper(Str::random(8)),
+                'invoice_no' => 'CH-'.strtoupper(Str::random(8)),
                 'customer_name' => $data['customer_name'],
+                'customer_email' => $data['email'], // ✅ ADD THIS
                 'phone' => $data['phone'],
                 'address' => $data['address'],
                 'area' => $data['area'] ?? null,
@@ -98,8 +102,8 @@ class CheckoutController extends Controller
             ]);
 
             // Increment coupon usage
-            if (!empty($couponSession['coupon_id'])) {
-                \App\Models\Coupon::where('id', $couponSession['coupon_id'])->increment('used_count');
+            if (! empty($couponSession['coupon_id'])) {
+                Coupon::where('id', $couponSession['coupon_id'])->increment('used_count');
             }
 
             foreach ($items as $item) {
@@ -111,6 +115,7 @@ class CheckoutController extends Controller
                     'line_total' => $item['product']->price * $item['qty'],
                 ]);
             }
+
             return $order;
         });
 
@@ -119,7 +124,7 @@ class CheckoutController extends Controller
 
         // Send order confirmation email using admin-managed template
         try {
-            $recipient = $order->user?->email ?? $order->customer_email ?? null;
+            $recipient = $order->customer_email ?: optional($order->user)->email;
             if ($recipient) {
                 $rendered = EmailTemplate::render('order.confirmation', [
                     'name' => $order->customer_name,
@@ -141,8 +146,10 @@ class CheckoutController extends Controller
                 }
             }
         } catch (\Throwable $e) {
-            if (isset($log)) $log->update(['status' => 'failed', 'error_message' => $e->getMessage()]);
-            \Log::warning('Order email failed: ' . $e->getMessage());
+            if (isset($log)) {
+                $log->update(['status' => 'failed', 'error_message' => $e->getMessage()]);
+            }
+            \Log::warning('Order email failed: '.$e->getMessage());
         }
 
         if ($request->wantsJson()) {
@@ -156,19 +163,20 @@ class CheckoutController extends Controller
         }
 
         return redirect()->route('checkout.success', $order)
-            ->with('toast', '🎉 অর্ডার সফল হয়েছে! ইনভয়েস: ' . $order->invoice_no);
+            ->with('toast', '🎉 অর্ডার সফল হয়েছে! ইনভয়েস: '.$order->invoice_no);
     }
 
     public function calculateDeliveryFee($area, $subtotal)
     {
         $zone = DeliveryZone::where('zone_name', 'like', "%{$area}%")->first();
-        if (!$zone) {
+        if (! $zone) {
             $zone = DeliveryZone::where('zone_name', 'বনগ্রাম এলাকা')->first();
         }
 
         if ($subtotal >= $zone->min_order_for_free) {
             return 0;
         }
+
         return $zone->delivery_charge;
     }
 
@@ -202,13 +210,13 @@ class CheckoutController extends Controller
         $subtotal = (int) $request->input('subtotal', 0);
 
         // Find matching delivery zone
-        $zone = \App\Models\DeliveryZone::where('zone_name', 'like', "%{$area}%")->first();
+        $zone = DeliveryZone::where('zone_name', 'like', "%{$area}%")->first();
 
-        if (!$zone) {
-            $zone = \App\Models\DeliveryZone::where('is_active', true)->first();
+        if (! $zone) {
+            $zone = DeliveryZone::where('is_active', true)->first();
         }
 
-        if (!$zone) {
+        if (! $zone) {
             return response()->json([
                 'delivery_fee' => 60,
                 'total' => $subtotal + 60,
