@@ -203,27 +203,25 @@ class CheckoutController extends Controller
 
     protected function calculateTotals($area = null, $zone = null)
     {
-        $subtotal = Cart::subtotal();
+        $subtotal = Cart::subtotal();  // ✅ 20 আসছে (সাব-টোটাল)
 
         if (! $zone) {
             $zone = DeliveryZone::where('is_active', true)->first();
         }
 
-        // 🎯 ডায়নামিক - জোনের নিজস্ব min_order_for_free ব্যবহার করছে
-        $minOrderForFree = $zone->min_order_for_free;  // যেমন: বনগ্রাম বাজারের জন্য 1500
-        $deliveryCharge = $zone->delivery_charge;       // যেমন: বনগ্রাম বাজারের জন্য 20
+        $minOrderForFree = $zone->min_order_for_free;
+        $deliveryCharge = $zone->delivery_charge;
 
-        // ✅ ক্যালকুলেশন (ডায়নামিক)
         if ($subtotal >= $minOrderForFree) {
-            $deliveryFee = 0;  // ফ্রি
+            $deliveryFee = 0;
         } else {
-            $deliveryFee = $deliveryCharge;  // চার্জ দিতে হবে
+            $deliveryFee = $deliveryCharge;  // ✅ 60 আসছে
         }
 
         return [
-            'subtotal' => $subtotal,
-            'deliveryFee' => $deliveryFee,
-            'total' => $subtotal + $deliveryFee,
+            'subtotal' => $subtotal,        // 20 ✅
+            'deliveryFee' => $deliveryFee,   // 60 ✅
+            'total' => $subtotal + $deliveryFee,  // 80 হওয়ার কথা ✅
         ];
     }
 
