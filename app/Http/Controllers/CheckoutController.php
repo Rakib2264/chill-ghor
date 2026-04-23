@@ -166,49 +166,30 @@ class CheckoutController extends Controller
 
     // ─── Delivery fee API (unchanged) ─────────────────────────────────────────
 
-    public function getDeliveryFee(Request $request)
-    {
-        $zoneName = $request->input('area');
-        $subtotal = (int) $request->input('subtotal', 0);
-
-        // ✅ লগ যোগ করুন (ডিবাগের জন্য)
-        \Log::info('getDeliveryFee called', [
-            'zoneName' => $zoneName,
-            'subtotal' => $subtotal,
+public function getDeliveryFee(Request $request)
+{
+    $zoneName = $request->input('area');
+    $subtotal = (int) $request->input('subtotal', 0);
+    
+    $zone = DeliveryZone::where('zone_name', $zoneName)->first();
+    
+    if (!$zone) {
+        return response()->json([
+            'delivery_fee' => 60,  // ✅ Number
+            'free_min' => 500,      // ✅ Number
+            'zone_name' => 'ডিফল্ট'
         ]);
-
-        // ✅ জোন খুঁজুন - exact match বা like
-        $zone = DeliveryZone::where('zone_name', $zoneName)->first();
-
-        if (! $zone) {
-            // ✅ যদি exact match না পাওয়া যায়, তাহলে like দিয়ে চেষ্টা করুন
-            $zone = DeliveryZone::where('zone_name', 'like', '%'.$zoneName.'%')->first();
-        }
-
-        if (! $zone) {
-            // কোনো জোন না পাওয়া গেলে ডিফল্ট রিটার্ন করুন
-            return response()->json([
-                'delivery_fee' => 60,
-                'total' => $subtotal + 60,
-                'free_min' => 500,
-                'zone' => 'ডিফল্ট',
-            ]);
-        }
-
-        // ডেলিভারি ফি ক্যালকুলেট করুন
-        $deliveryFee = ($subtotal >= $zone->min_order_for_free) ? 0 : $zone->delivery_charge;
-
-        $response = [
-            'delivery_fee' => $deliveryFee,
-            'total' => $subtotal + $deliveryFee,
-            'zone' => $zone->zone_name,
-            'free_min' => $zone->min_order_for_free,
-        ];
-
-        \Log::info('getDeliveryFee response', $response);
-
-        return response()->json($response);
     }
+    
+    // ✅ নিশ্চিত করুন Integer রিটার্ন করছে
+    $deliveryFee = ($subtotal >= $zone->min_order_for_free) ? 0 : (int) $zone->delivery_charge;
+    
+    return response()->json([
+        'delivery_fee' => $deliveryFee,      // ✅ Number
+        'free_min' => (int) $zone->min_order_for_free,  // ✅ Number
+        'zone_name' => $zone->zone_name
+    ]);
+}
 
     public function success(Order $order)
     {
