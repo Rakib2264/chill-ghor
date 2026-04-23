@@ -382,9 +382,23 @@
                     trx_id: '',
                 },
 
-                get totalAfterDiscount() {
-                    return Math.max(0, this.subtotal + this.deliveryFee - this.discount);
-                },
+         get totalAfterDiscount() {
+    // ✅ নিশ্চিত করুন যে সব value number এ কনভার্ট হচ্ছে
+    let subtotalNum = parseInt(this.subtotal) || 0;
+    let deliveryNum = parseInt(this.deliveryFee) || 0;
+    let discountNum = parseInt(this.discount) || 0;
+    
+    let result = subtotalNum + deliveryNum - discountNum;
+    
+    console.log('Total calculation:', {
+        subtotal: subtotalNum,
+        delivery: deliveryNum,
+        discount: discountNum,
+        result: result
+    });
+    
+    return Math.max(0, result);
+},
 
                 get couponApplied() {
                     return this.discount > 0 && this.couponCode;
@@ -395,22 +409,22 @@
                     if (def) this.selectAddress(def);
                 },
 
-async selectAddress(addr) {  // ✅ async যোগ করুন
-    this.selectedAddressId = addr.id;
-    this.form.address_id = addr.id;
-    this.form.customer_name = addr.recipient_name;
-    this.form.phone = addr.phone;
-    this.form.email = addr.email || '';
-    this.form.area = addr.area || '';
-    this.form.address = addr.address_line;
-    this.form.delivery_zone = addr.zone_name || '';
-    
-    console.log('Address selected, zone:', this.form.delivery_zone);
-    
-    if (this.form.delivery_zone) {
-        await this.updateDeliveryFee();
-    }
-},
+                async selectAddress(addr) { // ✅ async যোগ করুন
+                    this.selectedAddressId = addr.id;
+                    this.form.address_id = addr.id;
+                    this.form.customer_name = addr.recipient_name;
+                    this.form.phone = addr.phone;
+                    this.form.email = addr.email || '';
+                    this.form.area = addr.area || '';
+                    this.form.address = addr.address_line;
+                    this.form.delivery_zone = addr.zone_name || '';
+
+                    console.log('Address selected, zone:', this.form.delivery_zone);
+
+                    if (this.form.delivery_zone) {
+                        await this.updateDeliveryFee();
+                    }
+                },
 
                 clearAddressForm() {
                     this.selectedAddressId = 'new';
