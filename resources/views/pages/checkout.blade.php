@@ -395,19 +395,22 @@
                     if (def) this.selectAddress(def);
                 },
 
-                selectAddress(addr) {
-                    this.selectedAddressId = addr.id;
-                    this.form.address_id = addr.id;
-                    this.form.customer_name = addr.recipient_name;
-                    this.form.phone = addr.phone;
-                    this.form.email = addr.email || '';
-                    this.form.area = addr.area || '';
-                    this.form.address = addr.address_line;
-                    this.form.delivery_zone = addr.zone_name || '';
-                    if (this.form.delivery_zone) {
-                        this.updateDeliveryFee();
-                    }
-                },
+async selectAddress(addr) {  // ✅ async যোগ করুন
+    this.selectedAddressId = addr.id;
+    this.form.address_id = addr.id;
+    this.form.customer_name = addr.recipient_name;
+    this.form.phone = addr.phone;
+    this.form.email = addr.email || '';
+    this.form.area = addr.area || '';
+    this.form.address = addr.address_line;
+    this.form.delivery_zone = addr.zone_name || '';
+    
+    console.log('Address selected, zone:', this.form.delivery_zone);
+    
+    if (this.form.delivery_zone) {
+        await this.updateDeliveryFee();
+    }
+},
 
                 clearAddressForm() {
                     this.selectedAddressId = 'new';
@@ -422,22 +425,39 @@
                 },
 
                 async updateDeliveryFee() {
-                    if (!this.form.delivery_zone) return;
-                    try {
-                        // Find selected zone details
-                        const selectedZone = this.deliveryZones.find(z => z.zone_name === this.form.delivery_zone);
-                        if (selectedZone) {
-                            this.selectedZoneName = selectedZone.zone_name;
-                        }
+                    if (!this.form.delivery_zone) {
+                        console.log('No zone selected');
+                        return;
+                    }
 
-                        const r = await fetch(
-                            `${this.deliveryFeeUrl}?area=${encodeURIComponent(this.form.delivery_zone)}&subtotal=${this.subtotal}`
-                        );
-                        const d = await r.json();
-                        this.deliveryFee = d.delivery_fee;
-                        this.freeMin = d.free_min;
-                    } catch (e) {
-                        console.error('Delivery fee update failed:', e);
+                    console.log('Updating delivery fee for zone:', this.form.delivery_zone);
+                    console.log('Current subtotal:', this.subtotal);
+
+                    try {
+                        // ✅ ইউআরএল ঠিক করে দিন
+                        const url =
+                            `${this.deliveryFeeUrl}?area=${encodeURIComponent(this.form.delivery_zone)}&subtotal=${this.subtotal}`;
+                        console.log('Fetching URL:', url);
+
+                        const response = await fetch(url);
+                        const data = await response.json();
+
+                        console.log('Response data:', data);
+
+                        if (data.delivery_fee !== undefined) {
+                            this.deliveryFee = data.delivery_fee;
+                            this.freeMin = data.free_min || 500;
+
+                            console.log('Updated deliveryFee:', this.deliveryFee);
+                            console.log('Updated freeMin:', this.freeMin);
+                        } else {
+                            console.error('Invalid response format:', data);
+                        }
+                    } catch (error) {
+                        console.error('Delivery fee update failed:', error);
+                        // ফ্যালব্যাক ভ্যালু সেট করুন
+                        this.deliveryFee = 60;
+                        this.freeMin = 500;
                     }
                 },
 
