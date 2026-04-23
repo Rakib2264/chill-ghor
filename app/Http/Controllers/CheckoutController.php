@@ -24,15 +24,15 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')->with('toast', 'কার্ট খালি আছে');
         }
 
-        $user    = Auth::user();
+        $user = Auth::user();
 
         // ─── ঠিকানাগুলো delivery zone সহ লোড করুন ────────────────────────────
         $addresses = $user
             ? $user->addresses()
-            ->with('deliveryZone')   // ← zone eager-load
-            ->orderByDesc('is_default')
-            ->latest()
-            ->get()
+                ->with('deliveryZone')   // ← zone eager-load
+                ->orderByDesc('is_default')
+                ->latest()
+                ->get()
             : collect();
 
         $defaultAddress = $addresses->firstWhere('is_default', true) ?? $addresses->first();
@@ -43,53 +43,53 @@ class CheckoutController extends Controller
         $totals = $this->calculateTotals(null, $defaultAddress?->deliveryZone ?? null);
 
         $couponSession = session('coupon');
-        $discount      = (int) ($couponSession['discount'] ?? 0);
-        $couponCode    = $couponSession['code'] ?? null;
+        $discount = (int) ($couponSession['discount'] ?? 0);
+        $couponCode = $couponSession['code'] ?? null;
 
         // ─── addresses JSON-এ deliveryZone তথ্য যোগ করুন ─────────────────────
         $addressesWithZone = $addresses->map(function ($addr) {
             return [
-                'id'               => $addr->id,
-                'label'            => $addr->label,
-                'recipient_name'   => $addr->recipient_name,
-                'phone'            => $addr->phone,
-                'area'             => $addr->area,
-                'address_line'     => $addr->address_line,
-                'is_default'       => $addr->is_default,
+                'id' => $addr->id,
+                'label' => $addr->label,
+                'recipient_name' => $addr->recipient_name,
+                'phone' => $addr->phone,
+                'area' => $addr->area,
+                'address_line' => $addr->address_line,
+                'is_default' => $addr->is_default,
                 'delivery_zone_id' => $addr->delivery_zone_id,
                 // ── zone তথ্য সরাসরি address object-এ ──
-                'zone_name'        => $addr->deliveryZone?->zone_name ?? '',
-                'delivery_charge'  => $addr->deliveryZone?->delivery_charge ?? 0,
+                'zone_name' => $addr->deliveryZone?->zone_name ?? '',
+                'delivery_charge' => $addr->deliveryZone?->delivery_charge ?? 0,
                 'min_order_for_free' => $addr->deliveryZone?->min_order_for_free ?? 1500,
             ];
         });
 
         return view('pages.checkout', [
-            'items'          => $items,
-            'subtotal'       => $totals['subtotal'],
-            'deliveryFee'    => $totals['deliveryFee'],
-            'total'          => 'total' => $totals['total'],,
-            'discount'       => $discount,
-            'couponCode'     => $couponCode,
-            'addresses'      => $addressesWithZone,
+            'items' => $items,
+            'subtotal' => $totals['subtotal'],
+            'deliveryFee' => $totals['deliveryFee'],
+            'total' => $totals['total'], // ✅ FIXED
+            'discount' => $discount,
+            'couponCode' => $couponCode,
+            'addresses' => $addressesWithZone,
             'defaultAddress' => $defaultAddress,
-            'deliveryZones'  => $deliveryZones,
+            'deliveryZones' => $deliveryZones,
         ]);
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'customer_name'   => 'required|string|max:120',
-            'phone'           => 'required|string|max:30',
-            'email'           => 'required|email|max:120',
-            'address'         => 'required|string|max:500',
-            'area'            => 'nullable|string|max:120',
-            'delivery_zone'   => 'nullable|string|max:100',
-            'notes'           => 'nullable|string|max:500',
-            'payment_method'  => 'required|in:cod,bkash,nagad',
-            'trx_id'          => 'required_if:payment_method,bkash,nagad|nullable|string|min:6|max:50',
-            'address_id'      => 'nullable|exists:addresses,id',
+            'customer_name' => 'required|string|max:120',
+            'phone' => 'required|string|max:30',
+            'email' => 'required|email|max:120',
+            'address' => 'required|string|max:500',
+            'area' => 'nullable|string|max:120',
+            'delivery_zone' => 'nullable|string|max:100',
+            'notes' => 'nullable|string|max:500',
+            'payment_method' => 'required|in:cod,bkash,nagad',
+            'trx_id' => 'required_if:payment_method,bkash,nagad|nullable|string|min:6|max:50',
+            'address_id' => 'nullable|exists:addresses,id',
         ]);
 
         $items = Cart::items();
@@ -97,46 +97,48 @@ class CheckoutController extends Controller
             return response()->json(['ok' => false, 'message' => 'কার্ট খালি আছে'], 422);
         }
 
-        $zone   = DeliveryZone::where('zone_name', $data['delivery_zone'] ?? '')->first();
+        $zone = DeliveryZone::where('zone_name', $data['delivery_zone'] ?? '')->first();
         $totals = $this->calculateTotals($data['area'] ?? null, $zone);
 
         $couponSession = session('coupon');
-        $couponCode    = $couponSession['code'] ?? null;
-        $discount      = (int) ($couponSession['discount'] ?? 0);
-        $finalTotal    = 'total' => $totals['total'],;
+        $couponCode = $couponSession['code'] ?? null;
+        $discount = (int) ($couponSession['discount'] ?? 0);
+
+        // ✅ FINAL FIX
+        $finalTotal = max(0, $totals['total'] - $discount);
 
         $order = DB::transaction(function () use ($data, $items, $totals, $zone, $couponCode, $discount, $finalTotal, $couponSession) {
             $order = Order::create([
-                'user_id'        => Auth::id(),
-                'invoice_no'     => 'CH-' . strtoupper(Str::random(8)),
-                'customer_name'  => $data['customer_name'],
+                'user_id' => Auth::id(),
+                'invoice_no' => 'CH-'.strtoupper(Str::random(8)),
+                'customer_name' => $data['customer_name'],
                 'customer_email' => $data['email'],
-                'phone'          => $data['phone'],
-                'address'        => $data['address'],
-                'area'           => $data['area'] ?? null,
-                'delivery_zone'  => $zone->zone_name ?? null,
-                'notes'          => $data['notes'] ?? null,
+                'phone' => $data['phone'],
+                'address' => $data['address'],
+                'area' => $data['area'] ?? null,
+                'delivery_zone' => $zone->zone_name ?? null,
+                'notes' => $data['notes'] ?? null,
                 'payment_method' => $data['payment_method'],
-                'trx_id'         => $data['trx_id'] ?? null,
-                'subtotal'       => $totals['subtotal'],
-                'delivery_fee'   => $totals['deliveryFee'],
-                'total'          => $finalTotal,
-                'coupon_code'    => $couponCode,
-                'discount'       => $discount,
-                'status'         => 'pending',
+                'trx_id' => $data['trx_id'] ?? null,
+                'subtotal' => $totals['subtotal'],
+                'delivery_fee' => $totals['deliveryFee'],
+                'total' => $finalTotal,
+                'coupon_code' => $couponCode,
+                'discount' => $discount,
+                'status' => 'pending',
             ]);
 
-            if (!empty($couponSession['coupon_id'])) {
+            if (! empty($couponSession['coupon_id'])) {
                 Coupon::where('id', $couponSession['coupon_id'])->increment('used_count');
             }
 
             foreach ($items as $item) {
                 $order->items()->create([
-                    'product_id'   => $item['product']->id,
+                    'product_id' => $item['product']->id,
                     'product_name' => $item['product']->name,
-                    'price'        => $item['product']->price,
-                    'quantity'     => $item['qty'],
-                    'line_total'   => $item['product']->price * $item['qty'],
+                    'price' => $item['product']->price,
+                    'quantity' => $item['qty'],
+                    'line_total' => $item['product']->price * $item['qty'],
                 ]);
             }
 
@@ -150,35 +152,35 @@ class CheckoutController extends Controller
 
         if ($request->wantsJson()) {
             return response()->json([
-                'ok'         => true,
-                'order_id'   => $order->id,
+                'ok' => true,
+                'order_id' => $order->id,
                 'invoice_no' => $order->invoice_no,
-                'track_url'  => route('order.track.form') . '?invoice=' . $order->invoice_no,
-                'message'    => '🎉 অর্ডার সফল হয়েছে!',
+                'track_url' => route('order.track.form').'?invoice='.$order->invoice_no,
+                'message' => '🎉 অর্ডার সফল হয়েছে!',
             ]);
         }
 
         return redirect()->route('checkout.success', $order)
-            ->with('toast', '🎉 অর্ডার সফল হয়েছে! ইনভয়েস: ' . $order->invoice_no);
+            ->with('toast', '🎉 অর্ডার সফল হয়েছে! ইনভয়েস: '.$order->invoice_no);
     }
 
     // ─── Delivery fee API (unchanged) ─────────────────────────────────────────
 
     public function getDeliveryFee(Request $request)
     {
-        $area     = $request->input('area');
+        $area = $request->input('area');
         $subtotal = (int) $request->input('subtotal', 0);
 
         $zone = DeliveryZone::where('zone_name', 'like', "%{$area}%")->first();
-        if (!$zone) {
+        if (! $zone) {
             $zone = DeliveryZone::where('is_active', true)->first();
         }
-        if (!$zone) {
+        if (! $zone) {
             return response()->json([
                 'delivery_fee' => 60,
-                'total'        => $subtotal + 60,
-                'zone'         => 'ডিফল্ট',
-                'free_min'     => 500,
+                'total' => $subtotal + 60,
+                'zone' => 'ডিফল্ট',
+                'free_min' => 500,
             ]);
         }
 
@@ -186,9 +188,9 @@ class CheckoutController extends Controller
 
         return response()->json([
             'delivery_fee' => $deliveryFee,
-            'total'        => $subtotal + $deliveryFee,
-            'zone'         => $zone->zone_name,
-            'free_min'     => $zone->min_order_for_free,
+            'total' => $subtotal + $deliveryFee,
+            'zone' => $zone->zone_name,
+            'free_min' => $zone->min_order_for_free,
         ]);
     }
 
@@ -199,64 +201,66 @@ class CheckoutController extends Controller
 
     // ─── Private helpers ──────────────────────────────────────────────────────
 
-protected function calculateTotals($area = null, $zone = null)
-{
-    $subtotal = Cart::subtotal();
-    
-    if (!$zone) {
-        $zone = DeliveryZone::where('is_active', true)->first();
+    protected function calculateTotals($area = null, $zone = null)
+    {
+        $subtotal = Cart::subtotal();
+
+        if (! $zone) {
+            $zone = DeliveryZone::where('is_active', true)->first();
+        }
+
+        // 🎯 ডায়নামিক - জোনের নিজস্ব min_order_for_free ব্যবহার করছে
+        $minOrderForFree = $zone->min_order_for_free;  // যেমন: বনগ্রাম বাজারের জন্য 1500
+        $deliveryCharge = $zone->delivery_charge;       // যেমন: বনগ্রাম বাজারের জন্য 20
+
+        // ✅ ক্যালকুলেশন (ডায়নামিক)
+        if ($subtotal >= $minOrderForFree) {
+            $deliveryFee = 0;  // ফ্রি
+        } else {
+            $deliveryFee = $deliveryCharge;  // চার্জ দিতে হবে
+        }
+
+        return [
+            'subtotal' => $subtotal,
+            'deliveryFee' => $deliveryFee,
+            'total' => $subtotal + $deliveryFee,
+        ];
     }
-    
-    // 🎯 ডায়নামিক - জোনের নিজস্ব min_order_for_free ব্যবহার করছে
-    $minOrderForFree = $zone->min_order_for_free;  // যেমন: বনগ্রাম বাজারের জন্য 1500
-    $deliveryCharge = $zone->delivery_charge;       // যেমন: বনগ্রাম বাজারের জন্য 20
-    
-    // ✅ ক্যালকুলেশন (ডায়নামিক)
-    if ($subtotal >= $minOrderForFree) {
-        $deliveryFee = 0;  // ফ্রি
-    } else {
-        $deliveryFee = $deliveryCharge;  // চার্জ দিতে হবে
-    }
-    
-    return [
-        'subtotal' => $subtotal,
-        'deliveryFee' => $deliveryFee,
-        'total' => $subtotal + $deliveryFee,
-    ];
-}
 
     private function sendOrderConfirmationEmail(Order $order)
     {
         try {
             $recipient = null;
-            if (!empty($order->customer_email) && filter_var($order->customer_email, FILTER_VALIDATE_EMAIL)) {
+            if (! empty($order->customer_email) && filter_var($order->customer_email, FILTER_VALIDATE_EMAIL)) {
                 $recipient = $order->customer_email;
-            } elseif ($order->user && !empty($order->user->email) && filter_var($order->user->email, FILTER_VALIDATE_EMAIL)) {
+            } elseif ($order->user && ! empty($order->user->email) && filter_var($order->user->email, FILTER_VALIDATE_EMAIL)) {
                 $recipient = $order->user->email;
             }
-            if (!$recipient) {
-                \Log::warning('No valid email for order #' . $order->invoice_no);
+            if (! $recipient) {
+                \Log::warning('No valid email for order #'.$order->invoice_no);
+
                 return;
             }
 
             $rendered = EmailTemplate::render('order.confirmation', [
-                'name'     => $order->customer_name,
+                'name' => $order->customer_name,
                 'order_no' => $order->invoice_no,
-                'total'    => number_format($order->total),
+                'total' => number_format($order->total),
             ]);
-            if (!$rendered) {
+            if (! $rendered) {
                 \Log::warning('Email template not found: order.confirmation');
+
                 return;
             }
 
             $log = EmailLog::create([
                 'email_template_id' => $rendered['template_id'] ?? null,
-                'recipient_email'   => $recipient,
-                'recipient_name'    => $order->customer_name,
-                'subject'           => $rendered['subject'],
-                'audience'          => 'order_confirmation',
-                'status'            => 'pending',
-                'sent_by'           => Auth::id(),
+                'recipient_email' => $recipient,
+                'recipient_name' => $order->customer_name,
+                'subject' => $rendered['subject'],
+                'audience' => 'order_confirmation',
+                'status' => 'pending',
+                'sent_by' => Auth::id(),
             ]);
 
             Mail::to($recipient)->send(new GenericMail($rendered['subject'], $rendered['body']));
@@ -265,7 +269,7 @@ protected function calculateTotals($area = null, $zone = null)
             if (isset($log)) {
                 $log->update(['status' => 'failed', 'error_message' => $e->getMessage()]);
             }
-            \Log::error('Order email failed for #' . $order->invoice_no . ': ' . $e->getMessage());
+            \Log::error('Order email failed for #'.$order->invoice_no.': '.$e->getMessage());
         }
     }
 }
