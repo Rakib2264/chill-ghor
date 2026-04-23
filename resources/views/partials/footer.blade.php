@@ -1,4 +1,3 @@
-{{-- resources/views/partials/footer.blade.php --}}
 @php
     use App\Models\Setting;
     

@@ -2,17 +2,35 @@
 @php
     use App\Models\Setting;
 
-    // Helper function to get settings
+    // Helper function to get settings with automatic JSON decoding
     function getSetting($key, $default = null)
     {
-        return Setting::get($key, $default);
+        $value = Setting::get($key, $default);
+
+        // If value is already an array, return it directly
+        if (is_array($value)) {
+            return $value;
+        }
+
+        // If it's a string that looks like JSON, decode it
+    if (is_string($value)) {
+        $trimmed = trim($value);
+        if (str_starts_with($trimmed, '[') || str_starts_with($trimmed, '{')) {
+            $decoded = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                return $decoded;
+            }
+        }
     }
 
-    $siteTitle = getSetting('site_title', 'চিল ঘর — চা–কফির আড্ডা, ফাস্ট ফুডের আসল স্বাদ');
-    $siteDescription = getSetting('site_description', 'বনগ্রাম স্কুল ও কলেজের সামনে');
+    return $value;
+}
+
+$siteTitle = getSetting('site_title', 'চিল ঘর — চা–কফির আড্ডা, ফাস্ট ফুডের আসল স্বাদ');
+$siteDescription = getSetting('site_description', 'বনগ্রাম স্কুল ও কলেজের সামনে');
 @endphp
-@section('title', $siteTitle)
-@section('description', $siteDescription)
+@section('title', is_string($siteTitle) ? $siteTitle : 'চিল ঘর')
+@section('description', is_string($siteDescription) ? $siteDescription : 'বনগ্রাম স্কুল ও কলেজের সামনে')
 
 @section('content')
 
@@ -54,22 +72,21 @@
 
                 <div class="mt-10 flex flex-wrap gap-6 sm:gap-10">
                     @php
-                        $statsJson = getSetting(
-                            'hero_stats',
-                            json_encode([
-                                ['৩০+', 'বছরের অভিজ্ঞতা'],
-                                ['৫০+', 'পদের মেনু'],
-                                ['১০K+', 'খুশি গ্রাহক'],
-                                ['⭐৪.৮', 'গ্রাহক রেটিং'],
-                            ]),
-                        );
-                        $stats = json_decode($statsJson, true);
-                        if (!is_array($stats)) {
-                            $stats = [
-                                ['৩০+', 'বছরের অভিজ্ঞতা'],
-                                ['৫০+', 'পদের মেনু'],
-                                ['১০K+', 'খুশি গ্রাহক'],
-                                ['⭐৪.৮', 'গ্রাহক রেটিং'],
+                        // Now getSetting returns array directly if it's JSON
+$stats = getSetting('hero_stats', [
+    ['৩০+', 'বছরের অভিজ্ঞতা'],
+    ['৫০+', 'পদের মেনু'],
+    ['১০K+', 'খুশি গ্রাহক'],
+    ['⭐৪.৮', 'গ্রাহক রেটিং'],
+]);
+
+// Ensure $stats is an array
+if (!is_array($stats)) {
+    $stats = [
+        ['৩০+', 'বছরের অভিজ্ঞতা'],
+        ['৫০+', 'পদের মেনু'],
+        ['১০K+', 'খুশি গ্রাহক'],
+        ['⭐৪.৮', 'গ্রাহক রেটিং'],
                             ];
                         }
                     @endphp
@@ -155,15 +172,13 @@
     <section class="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8">
         <div class="grid gap-4 sm:grid-cols-3">
             @php
-                $featuresJson = getSetting(
-                    'features',
-                    json_encode([
-                        ['🚚', 'ফ্রি ডেলিভারি', getSetting('free_delivery_condition', '৫০০ টাকার উপরে অর্ডারে')],
-                        ['⏱️', getSetting('delivery_time', '২০-৩০ মিনিট'), 'দ্রুত ডেলিভারি গ্যারান্টি'],
-                        ['💰', 'ক্যাশ অন ডেলিভারি', 'খাবার পেয়ে পেমেন্ট করুন'],
-                    ]),
-                );
-                $features = json_decode($featuresJson, true);
+                // getSetting now returns array directly
+                $features = getSetting('features', [
+                    ['🚚', 'ফ্রি ডেলিভারি', '৫০০ টাকার উপরে অর্ডারে'],
+                    ['⏱️', '২০-৩০ মিনিট', 'দ্রুত ডেলিভারি গ্যারান্টি'],
+                    ['💰', 'ক্যাশ অন ডেলিভারি', 'খাবার পেয়ে পেমেন্ট করুন'],
+                ]);
+
                 if (!is_array($features)) {
                     $features = [
                         ['🚚', 'ফ্রি ডেলিভারি', '৫০০ টাকার উপরে অর্ডারে'],
