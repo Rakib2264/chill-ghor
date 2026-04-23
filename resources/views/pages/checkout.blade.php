@@ -382,23 +382,22 @@
                     trx_id: '',
                 },
 
-         get totalAfterDiscount() {
-    // ✅ নিশ্চিত করুন যে সব value number এ কনভার্ট হচ্ছে
-    let subtotalNum = parseInt(this.subtotal) || 0;
-    let deliveryNum = parseInt(this.deliveryFee) || 0;
-    let discountNum = parseInt(this.discount) || 0;
-    
-    let result = subtotalNum + deliveryNum - discountNum;
-    
-    console.log('Total calculation:', {
-        subtotal: subtotalNum,
-        delivery: deliveryNum,
-        discount: discountNum,
-        result: result
-    });
-    
-    return Math.max(0, result);
-},
+                get totalAfterDiscount() {
+                    let subtotalNum = parseInt(this.subtotal) || 0;
+                    let deliveryNum = parseInt(this.deliveryFee) || 0;
+                    let discountNum = parseInt(this.discount) || 0;
+
+                    let result = subtotalNum + deliveryNum - discountNum;
+
+                    console.log('Total calculation:', {
+                        subtotal: subtotalNum,
+                        delivery: deliveryNum,
+                        discount: discountNum,
+                        result: result
+                    });
+
+                    return Math.max(0, result);
+                },
 
                 get couponApplied() {
                     return this.discount > 0 && this.couponCode;
