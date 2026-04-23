@@ -68,7 +68,7 @@ class CheckoutController extends Controller
             'items'          => $items,
             'subtotal'       => $totals['subtotal'],
             'deliveryFee'    => $totals['deliveryFee'],
-            'total'          => max(0, $totals['total'] - $discount),
+            'total'          => 'total' => $totals['total'],,
             'discount'       => $discount,
             'couponCode'     => $couponCode,
             'addresses'      => $addressesWithZone,
@@ -103,7 +103,7 @@ class CheckoutController extends Controller
         $couponSession = session('coupon');
         $couponCode    = $couponSession['code'] ?? null;
         $discount      = (int) ($couponSession['discount'] ?? 0);
-        $finalTotal    = max(0, $totals['total'] - $discount);
+        $finalTotal    = 'total' => $totals['total'],;
 
         $order = DB::transaction(function () use ($data, $items, $totals, $zone, $couponCode, $discount, $finalTotal, $couponSession) {
             $order = Order::create([

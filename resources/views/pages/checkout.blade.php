@@ -316,7 +316,8 @@
                 <div class="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-green-100 text-5xl">
                     <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg></div>
+                    </svg>
+                </div>
                 <h2 class="font-display text-2xl font-bold">🎉 অর্ডার সফল হয়েছে!</h2>
                 <p class="mt-2 text-charcoal/65">আপনার অর্ডারটি গৃহীত হয়েছে। শীঘ্রই কনফার্মেশন কল পাবেন।</p>
                 <div class="mt-6 inline-flex items-center gap-2 rounded-xl bg-cream px-5 py-3 text-sm font-mono"><span
@@ -431,7 +432,7 @@
 
                         const r = await fetch(
                             `${this.deliveryFeeUrl}?area=${encodeURIComponent(this.form.delivery_zone)}&subtotal=${this.subtotal}`
-                            );
+                        );
                         const d = await r.json();
                         this.deliveryFee = d.delivery_fee;
                         this.freeMin = d.free_min;
@@ -516,6 +517,8 @@
                     this.items = d.items;
                     this.subtotal = d.subtotal;
                     this.deliveryFee = d.delivery_fee;
+                    this.discount = d.discount ?? this.discount; // ✅ ADD THIS LINE
+
                     window.dispatchEvent(new CustomEvent('cart-updated', {
                         detail: {
                             count: d.count
