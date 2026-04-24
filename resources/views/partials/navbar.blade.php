@@ -23,8 +23,7 @@
             </div>
             <div>
                 <div class="font-display text-xl font-bold leading-none">চিল ঘর</div>
-                <div class="text-[10px] uppercase tracking-widest text-charcoal/50 leading-tight mt-0.5">চা–কফির আড্ডা
-                </div>
+                <div class="text-[10px] uppercase tracking-widest text-charcoal/50 leading-tight mt-0.5">চা–কফির আড্ডা</div>
             </div>
         </a>
 
@@ -33,7 +32,7 @@
             @foreach ($navLinks as $l)
                 <a href="{{ route($l['route']) }}"
                     class="rounded-full px-4 py-2 text-sm font-medium transition
-                  {{ request()->routeIs($l['route']) ? 'bg-primary text-white shadow-warm' : 'text-charcoal hover:bg-charcoal/5' }}">
+                    {{ request()->routeIs($l['route']) ? 'bg-primary text-white shadow-warm' : 'text-charcoal hover:bg-charcoal/5' }}">
                     {{ $l['label'] }}
                 </a>
             @endforeach
@@ -50,25 +49,31 @@
 
         {{-- Right icons --}}
         <div class="flex items-center gap-2">
+
+            {{-- Wishlist --}}
             <a href="{{ route('wishlist.index') }}"
                 class="relative flex h-10 w-10 items-center justify-center rounded-full bg-charcoal/5 hover:bg-charcoal/10 transition"
                 aria-label="wishlist">
                 <span class="text-[17px]">❤️</span>
                 @if ($wishCount > 0)
-                    <span
-                        class="absolute -right-0.5 -top-0.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-spice px-1 text-[10px] font-bold text-charcoal leading-none">{{ $wishCount }}</span>
+                    <span class="absolute -right-0.5 -top-0.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-spice px-1 text-[10px] font-bold text-charcoal leading-none"
+                          x-text="$store.cart?.count || {{ $wishCount }}">{{ $wishCount }}</span>
                 @endif
             </a>
 
-            <a href="{{ route('cart.index') }}"
+            {{-- Cart → সরাসরি Checkout-এ যাবে --}}
+            <a href="{{ route('checkout.index') }}"
                 class="relative flex h-10 w-10 items-center justify-center rounded-full bg-charcoal/5 hover:bg-charcoal/10 transition"
                 aria-label="cart">
                 <span class="text-[17px]">🛒</span>
-                @if ($cartCount > 0)
-                    <span
-                        class="absolute -right-0.5 -top-0.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-white leading-none">{{ $cartCount }}</span>
-                @endif
+                <span
+                    class="absolute -right-0.5 -top-0.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-white leading-none transition-all"
+                    x-data
+                    x-show="$store.cartCount > 0 || {{ $cartCount }} > 0"
+                    @cart-updated.window="$store.cartCount = $event.detail.count"
+                    x-text="$store.cartCount ?? {{ $cartCount }}">{{ $cartCount }}</span>
             </a>
+
             @auth
                 <a href="{{ route('profile.index') }}"
                     class="relative flex h-10 w-10 items-center justify-center rounded-full bg-charcoal/5 hover:bg-charcoal/10 transition"
@@ -82,13 +87,14 @@
                     লগইন
                 </a>
             @endauth
+
             {{-- Mobile hamburger --}}
             <button @click="open = !open"
                 class="flex h-10 w-10 items-center justify-center rounded-full bg-charcoal/5 md:hidden"
                 aria-label="toggle menu">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                 </svg>
             </button>
         </div>
@@ -100,16 +106,28 @@
             @foreach ($navLinks as $l)
                 <a href="{{ route($l['route']) }}"
                     class="rounded-xl px-4 py-2.5 text-sm font-semibold
-                  {{ request()->routeIs($l['route']) ? 'bg-primary text-white' : 'text-charcoal hover:bg-charcoal/5' }}">
+                    {{ request()->routeIs($l['route']) ? 'bg-primary text-white' : 'text-charcoal hover:bg-charcoal/5' }}">
                     {{ $l['label'] }}
                 </a>
             @endforeach
             @auth
                 @if (auth()->user()->is_admin ?? false)
                     <a href="{{ route('admin.dashboard') }}"
-                        class="rounded-xl px-4 py-2.5 text-sm font-semibold bg-charcoal text-cream">⚙️ অ্যাডমিন প্যানেল</a>
+                        class="rounded-xl px-4 py-2.5 text-sm font-semibold bg-charcoal text-cream">
+                        ⚙️ অ্যাডমিন প্যানেল
+                    </a>
                 @endif
             @endauth
         </nav>
     </div>
 </header>
+
+{{-- Alpine global cart count store --}}
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.store('cartCount', {{ $cartCount }});
+        window.addEventListener('cart-updated', (e) => {
+            Alpine.store('cartCount', e.detail.count ?? 0);
+        });
+    });
+</script>

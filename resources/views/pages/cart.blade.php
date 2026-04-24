@@ -100,11 +100,6 @@
             <dd class="font-bold">৳{{ number_format($subtotal) }}</dd>
           </div>
 
-          <div class="flex justify-between {{ $delivery_fee == 0 ? 'text-green-600' : '' }}">
-            <dt>ডেলিভারি চার্জ</dt>
-            <dd class="font-bold">{{ $delivery_fee == 0 ? 'ফ্রি' : '৳' . number_format($delivery_fee) }}</dd>
-          </div>
-
           @if ($couponDiscount > 0)
             <div class="flex justify-between text-green-600">
               <dt>কুপন ({{ $couponCode }})</dt>
