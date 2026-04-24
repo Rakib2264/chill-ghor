@@ -29,10 +29,10 @@ class CheckoutController extends Controller
         // ─── ঠিকানাগুলো delivery zone সহ লোড করুন ────────────────────────────
         $addresses = $user
             ? $user->addresses()
-                ->with('deliveryZone')   // ← zone eager-load
-                ->orderByDesc('is_default')
-                ->latest()
-                ->get()
+            ->with('deliveryZone')   // ← zone eager-load
+            ->orderByDesc('is_default')
+            ->latest()
+            ->get()
             : collect();
 
         $defaultAddress = $addresses->firstWhere('is_default', true) ?? $addresses->first();
@@ -202,22 +202,24 @@ class CheckoutController extends Controller
 
     protected function calculateTotals($area = null, $zone = null)
     {
-        $subtotal    = Cart::subtotal();
-        $deliveryFee = 0;
+        $subtotal = Cart::subtotal();
 
-        if ($zone) {
-            $deliveryFee = $subtotal >= $zone->min_order_for_free ? 0 : $zone->delivery_charge;
-        } else {
-            $defaultZone = DeliveryZone::where('is_active', true)->first();
-            $deliveryFee = $subtotal >= ($defaultZone->min_order_for_free ?? 1500)
-                ? 0
-                : ($defaultZone->delivery_charge ?? 60);
+        // জোন না থাকলে ডিফল্ট জোন নিন
+        if (!$zone) {
+            $zone = DeliveryZone::where('is_active', true)->first();
         }
 
+        // 🎯 সঠিক ক্যালকুলেশন (নিরাপদ)
+        $minOrderForFree = $zone->min_order_for_free ?? 1500;  // NULL হলে 1500
+        $deliveryCharge = $zone->delivery_charge ?? 60;        // NULL হলে 60
+
+        // ✅ লজিক: সাবটোটাল যদি ফ্রি থ্রেশহোল্ডের সমান বা বেশি হয় -> ফ্রি ডেলিভারি
+        $deliveryFee = ($subtotal >= $minOrderForFree) ? 0 : $deliveryCharge;
+
         return [
-            'subtotal'    => $subtotal,
+            'subtotal' => $subtotal,
             'deliveryFee' => $deliveryFee,
-            'total'       => $subtotal + $deliveryFee,
+            'total' => $subtotal + $deliveryFee,
         ];
     }
 
