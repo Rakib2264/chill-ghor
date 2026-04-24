@@ -48,94 +48,173 @@ class CheckoutController extends Controller
         ]);
     }
 
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'customer_name' => 'required|string|max:120',
-            'phone' => 'required|string|max:30',
-            'email' => 'required|email|max:120',
-            'address' => 'required|string|max:500',
-            'area' => 'nullable|string|max:120',
-            'delivery_zone' => 'nullable|string|max:100',
-            'notes' => 'nullable|string|max:500',
-            'payment_method' => 'required|in:cod,bkash,nagad',
-            'trx_id' => 'required_if:payment_method,bkash,nagad|nullable|string|min:6|max:50',
-            'address_id' => 'nullable|exists:addresses,id',
+public function store(Request $request)
+{
+    // ✅ ডিবাগ: দেখুন কি ডাটা আসছে
+    \Log::info('Checkout Data Received:', $request->all());
+    
+    $data = $request->validate([
+        'customer_name' => 'required|string|max:120',
+        'phone' => 'required|string|max:30',
+        'email' => 'required|email|max:120',  // ✅ email ফিল্ড রিকোয়ার্ড
+        'address' => 'required|string|max:500',
+        'area' => 'nullable|string|max:120',
+        'delivery_zone' => 'nullable|string|max:100',
+        'notes' => 'nullable|string|max:500',
+        'payment_method' => 'required|in:cod,bkash,nagad',
+        'trx_id' => 'required_if:payment_method,bkash,nagad|nullable|string|min:6|max:50',
+        'address_id' => 'nullable|exists:addresses,id',
+    ]);
+
+    // ✅ ডিবাগ: validated ডাটা চেক করুন
+    \Log::info('Validated Data:', $data);
+
+    $items = Cart::items();
+    if ($items->isEmpty()) {
+        return response()->json(['ok' => false, 'message' => 'কার্ট খালি আছে'], 422);
+    }
+
+    $zone = DeliveryZone::where('zone_name', $data['delivery_zone'] ?? '')->first();
+    $totals = $this->calculateTotals($data['area'] ?? null, $zone);
+
+    $couponSession = session('coupon');
+    $couponCode = $couponSession['code'] ?? null;
+    $discount = (int) ($couponSession['discount'] ?? 0);
+    $finalTotal = max(0, $totals['total'] - $discount);
+
+    $order = DB::transaction(function () use ($data, $items, $totals, $zone, $couponCode, $discount, $finalTotal, $couponSession) {
+        $order = Order::create([
+            'user_id' => Auth::id(),
+            'invoice_no' => 'CH-'.strtoupper(Str::random(8)),
+            'customer_name' => $data['customer_name'],
+            'customer_email' => $data['email'], // ✅ এটা সঠিক
+            'phone' => $data['phone'],
+            'address' => $data['address'],
+            'area' => $data['area'] ?? null,
+            'delivery_zone' => $zone->zone_name ?? null,
+            'notes' => $data['notes'] ?? null,
+            'payment_method' => $data['payment_method'],
+            'trx_id' => $data['trx_id'] ?? null,
+            'subtotal' => $totals['subtotal'],
+            'delivery_fee' => $totals['deliveryFee'],
+            'total' => $finalTotal,
+            'coupon_code' => $couponCode,
+            'discount' => $discount,
+            'status' => 'pending',
         ]);
 
-        $items = Cart::items();
-        if ($items->isEmpty()) {
-            return response()->json(['ok' => false, 'message' => 'কার্ট খালি আছে'], 422);
+        if (! empty($couponSession['coupon_id'])) {
+            Coupon::where('id', $couponSession['coupon_id'])->increment('used_count');
         }
 
-        // Calculate delivery fee based on zone
-        $zone = DeliveryZone::where('zone_name', $data['delivery_zone'] ?? '')->first();
-        $totals = $this->calculateTotals($data['area'] ?? null, $zone);
-
-        // Apply coupon if present in session
-        $couponSession = session('coupon');
-        $couponCode = $couponSession['code'] ?? null;
-        $discount = (int) ($couponSession['discount'] ?? 0);
-        $finalTotal = max(0, $totals['total'] - $discount);
-
-        $order = DB::transaction(function () use ($data, $items, $totals, $zone, $couponCode, $discount, $finalTotal, $couponSession) {
-            $order = Order::create([
-                'user_id' => Auth::id(),
-                'invoice_no' => 'CH-' . strtoupper(Str::random(8)),
-                'customer_name' => $data['customer_name'],
-                'customer_email' => $data['email'],
-                'phone' => $data['phone'],
-                'address' => $data['address'],
-                'area' => $data['area'] ?? null,
-                'delivery_zone' => $zone->zone_name ?? null,
-                'notes' => $data['notes'] ?? null,
-                'payment_method' => $data['payment_method'],
-                'trx_id' => $data['trx_id'] ?? null,
-                'subtotal' => $totals['subtotal'],
-                'delivery_fee' => $totals['deliveryFee'],
-                'total' => $finalTotal,
-                'coupon_code' => $couponCode,
-                'discount' => $discount,
-                'status' => 'pending',
-            ]);
-
-            // Increment coupon usage
-            if (!empty($couponSession['coupon_id'])) {
-                Coupon::where('id', $couponSession['coupon_id'])->increment('used_count');
-            }
-
-            foreach ($items as $item) {
-                $order->items()->create([
-                    'product_id' => $item['product']->id,
-                    'product_name' => $item['product']->name,
-                    'price' => $item['product']->price,
-                    'quantity' => $item['qty'],
-                    'line_total' => $item['product']->price * $item['qty'],
-                ]);
-            }
-
-            return $order;
-        });
-
-        Cart::clear();
-        session()->forget('coupon');
-
-        // Send order confirmation email
-        $this->sendOrderConfirmationEmail($order);
-
-        if ($request->wantsJson()) {
-            return response()->json([
-                'ok' => true,
-                'order_id' => $order->id,
-                'invoice_no' => $order->invoice_no,
-                'redirect' => route('checkout.success', $order),
-                'message' => '🎉 অর্ডার সফল হয়েছে!',
+        foreach ($items as $item) {
+            $order->items()->create([
+                'product_id' => $item['product']->id,
+                'product_name' => $item['product']->name,
+                'price' => $item['product']->price,
+                'quantity' => $item['qty'],
+                'line_total' => $item['product']->price * $item['qty'],
             ]);
         }
 
-        return redirect()->route('checkout.success', $order)
-            ->with('toast', '🎉 অর্ডার সফল হয়েছে! ইনভয়েস: ' . $order->invoice_no);
+        return $order;
+    });
+
+    Cart::clear();
+    session()->forget('coupon');
+
+    // ✅ ইমেইল পাঠানোর আগে ডিবাগ
+    \Log::info('Order Created:', [
+        'order_id' => $order->id,
+        'customer_name' => $order->customer_name,
+        'customer_email' => $order->customer_email,  // ✅ এটা চেক করুন
+        'invoice_no' => $order->invoice_no
+    ]);
+
+    // Send order confirmation email - সম্পূর্ণ নতুন কোড
+    $this->sendOrderEmail($order);
+
+    if ($request->wantsJson()) {
+        return response()->json([
+            'ok' => true,
+            'order_id' => $order->id,
+            'invoice_no' => $order->invoice_no,
+            'redirect' => route('checkout.success', $order),
+            'message' => '🎉 অর্ডার সফল হয়েছে!',
+        ]);
     }
+
+    return redirect()->route('checkout.success', $order)
+        ->with('toast', '🎉 অর্ডার সফল হয়েছে! ইনভয়েস: '.$order->invoice_no);
+}
+
+// ✅ নতুন মেথড যোগ করুন
+private function sendOrderEmail(Order $order)
+{
+    try {
+        // সঠিক ইমেইল রেসিপিয়েন্ট নিশ্চিত করুন
+        $recipient = null;
+        
+        // প্রথমে order থেকে ইমেইল নিন
+        if (!empty($order->customer_email) && filter_var($order->customer_email, FILTER_VALIDATE_EMAIL)) {
+            $recipient = $order->customer_email;
+        } 
+        // যদি order এ না থাকে তাহলে user থেকে নিন
+        elseif ($order->user && !empty($order->user->email) && filter_var($order->user->email, FILTER_VALIDATE_EMAIL)) {
+            $recipient = $order->user->email;
+        }
+        
+        // ✅ ডিবাগ: রেসিপিয়েন্ট চেক করুন
+        \Log::info('Email Recipient Check:', [
+            'order_email' => $order->customer_email,
+            'user_email' => $order->user->email ?? null,
+            'final_recipient' => $recipient
+        ]);
+        
+        // কোন ভ্যালিড ইমেইল না থাকলে ফেরত যান
+        if (!$recipient) {
+            \Log::error('No valid email found for order: ' . $order->id);
+            return;
+        }
+        
+        // টেমপ্লেট রেন্ডার করুন
+        $rendered = EmailTemplate::render('order.confirmation', [
+            'name' => $order->customer_name,
+            'order_no' => $order->invoice_no,
+            'total' => number_format($order->total),
+        ]);
+        
+        if (!$rendered) {
+            \Log::error('Email template not found: order.confirmation');
+            return;
+        }
+        
+        // ইমেইল লগ তৈরি করুন
+        $log = EmailLog::create([
+            'email_template_id' => $rendered['template_id'] ?? null,
+            'recipient_email' => $recipient,  // ✅ সঠিক ইমেইল
+            'recipient_name' => $order->customer_name,
+            'subject' => $rendered['subject'],
+            'audience' => 'order_confirmation',
+            'status' => 'pending',
+            'sent_by' => Auth::id(),
+        ]);
+        
+        // ইমেইল পাঠান
+        Mail::to($recipient)->send(new GenericMail($rendered['subject'], $rendered['body']));
+        
+        // লগ আপডেট করুন
+        $log->update(['status' => 'sent', 'sent_at' => now()]);
+        
+        \Log::info('Email sent successfully to: ' . $recipient);
+        
+    } catch (\Throwable $e) {
+        \Log::error('Email sending failed: ' . $e->getMessage());
+        if (isset($log)) {
+            $log->update(['status' => 'failed', 'error_message' => $e->getMessage()]);
+        }
+    }
+}
 
     /**
      * Send order confirmation email
