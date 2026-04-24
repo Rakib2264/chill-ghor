@@ -200,28 +200,31 @@ class CheckoutController extends Controller
 
     // ─── Private helpers ──────────────────────────────────────────────────────
 
-    protected function calculateTotals($area = null, $zone = null)
-    {
-        $subtotal = Cart::subtotal();
-
-        // জোন না থাকলে ডিফল্ট জোন নিন
-        if (!$zone) {
-            $zone = DeliveryZone::where('is_active', true)->first();
-        }
-
-        // 🎯 সঠিক ক্যালকুলেশন (নিরাপদ)
-        $minOrderForFree = $zone->min_order_for_free ?? 1500;  // NULL হলে 1500
-        $deliveryCharge = $zone->delivery_charge ?? 60;        // NULL হলে 60
-
-        // ✅ লজিক: সাবটোটাল যদি ফ্রি থ্রেশহোল্ডের সমান বা বেশি হয় -> ফ্রি ডেলিভারি
-        $deliveryFee = ($subtotal >= $minOrderForFree) ? 0 : $deliveryCharge;
-
-        return [
-            'subtotal' => $subtotal,
-            'deliveryFee' => $deliveryFee,
-            'total' => $subtotal + $deliveryFee,
-        ];
+protected function calculateTotals($area = null, $zone = null)
+{
+    $subtotal = Cart::subtotal();
+    
+    if (!$zone) {
+        $zone = DeliveryZone::where('is_active', true)->first();
     }
+    
+    // 🎯 ডায়নামিক - জোনের নিজস্ব min_order_for_free ব্যবহার করছে
+    $minOrderForFree = $zone->min_order_for_free;  // যেমন: বনগ্রাম বাজারের জন্য 1500
+    $deliveryCharge = $zone->delivery_charge;       // যেমন: বনগ্রাম বাজারের জন্য 20
+    
+    // ✅ ক্যালকুলেশন (ডায়নামিক)
+    if ($subtotal >= $minOrderForFree) {
+        $deliveryFee = 0;  // ফ্রি
+    } else {
+        $deliveryFee = $deliveryCharge;  // চার্জ দিতে হবে
+    }
+    
+    return [
+        'subtotal' => $subtotal,
+        'deliveryFee' => $deliveryFee,
+        'total' => $subtotal + $deliveryFee,
+    ];
+}
 
     private function sendOrderConfirmationEmail(Order $order)
     {
