@@ -29,6 +29,7 @@ use App\Http\Controllers\WishlistController;
 use Illuminate\Support\Facades\Route;
 
 /* ---------- Public site ---------- */
+
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/menu', [MenuController::class, 'index'])->name('menu.index');
 Route::get('/menu/{product:slug}', [MenuController::class, 'show'])->name('menu.show');
@@ -160,3 +161,29 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('emails/send', [AdminEmailController::class, 'send'])->name('emails.send.store');
     Route::get('emails/history', [AdminEmailController::class, 'history'])->name('emails.history');
 });
+// ========== TEST ROUTES (Remove in production) ==========
+if (app()->environment('local')) {
+    Route::get('/test-mail', function () {
+        try {
+            \Illuminate\Support\Facades\Mail::raw('This is a test email from Chill Ghor at ' . now(), function ($message) {
+                $message->to('test@example.com')
+                    ->subject('Test Email - Chill Ghor');
+            });
+            return '✅ Test email sent! Check your mail log or inbox.';
+        } catch (\Exception $e) {
+            return '❌ Error: ' . $e->getMessage();
+        }
+    });
+
+    Route::get('/mail-config', function () {
+        return [
+            'driver' => config('mail.default'),
+            'host' => config('mail.mailers.smtp.host'),
+            'port' => config('mail.mailers.smtp.port'),
+            'encryption' => config('mail.mailers.smtp.encryption'),
+            'username' => config('mail.mailers.smtp.username'),
+            'from_address' => config('mail.from.address'),
+            'from_name' => config('mail.from.name'),
+        ];
+    });
+}
