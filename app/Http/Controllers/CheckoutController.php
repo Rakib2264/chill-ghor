@@ -166,30 +166,30 @@ class CheckoutController extends Controller
 
     // ─── Delivery fee API (unchanged) ─────────────────────────────────────────
 
-public function getDeliveryFee(Request $request)
-{
-    $zoneName = $request->input('area');
-    $subtotal = (int) $request->input('subtotal', 0);
-    
-    $zone = DeliveryZone::where('zone_name', $zoneName)->first();
-    
-    if (!$zone) {
+    public function getDeliveryFee(Request $request)
+    {
+        $zoneName = $request->input('area');
+        $subtotal = (int) $request->input('subtotal', 0);
+
+        $zone = DeliveryZone::where('zone_name', $zoneName)->first();
+
+        if (! $zone) {
+            return response()->json([
+                'delivery_fee' => 60,  // ✅ Number
+                'free_min' => 500,      // ✅ Number
+                'zone_name' => 'ডিফল্ট',
+            ]);
+        }
+
+        // ✅ নিশ্চিত করুন Integer রিটার্ন করছে
+        $deliveryFee = ($subtotal >= $zone->min_order_for_free) ? 0 : (int) $zone->delivery_charge;
+
         return response()->json([
-            'delivery_fee' => 60,  // ✅ Number
-            'free_min' => 500,      // ✅ Number
-            'zone_name' => 'ডিফল্ট'
+            'delivery_fee' => $deliveryFee,      // ✅ Number
+            'free_min' => (int) $zone->min_order_for_free,  // ✅ Number
+            'zone_name' => $zone->zone_name,
         ]);
     }
-    
-    // ✅ নিশ্চিত করুন Integer রিটার্ন করছে
-    $deliveryFee = ($subtotal >= $zone->min_order_for_free) ? 0 : (int) $zone->delivery_charge;
-    
-    return response()->json([
-        'delivery_fee' => $deliveryFee,      // ✅ Number
-        'free_min' => (int) $zone->min_order_for_free,  // ✅ Number
-        'zone_name' => $zone->zone_name
-    ]);
-}
 
     public function success(Order $order)
     {
