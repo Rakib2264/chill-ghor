@@ -11,15 +11,12 @@
     $pageHeading = getSetting('contact_heading', 'আমাদের সাথে কথা বলুন');
     $pageSubheading = getSetting('contact_subheading', 'অর্ডার, ক্যাটারিং, ফিডব্যাক — যেকোনো প্রয়োজনে আমাদের জানান।');
     
-    // Contact Info Cards
-    $contactInfoJson = getSetting('contact_info_cards', json_encode([
-        ['📍', 'ঠিকানা', getSetting('contact_address', 'বনগ্রাম স্কুল ও কলেজের সামনে')],
-        ['📞', 'ফোন', getSetting('contact_phone', '+৮৮০ ১৭১১-০০০০০০')],
-        ['✉️', 'ইমেইল', getSetting('contact_email', 'hello@chillghor.com')],
-        ['🕐', 'খোলার সময়', getSetting('opening_hours', 'প্রতিদিন সকাল ৭টা – রাত ১১টা')],
-    ]));
-    $contactInfo = json_decode($contactInfoJson, true);
-    if (!is_array($contactInfo)) {
+    // ✅ Contact Info Cards - FIXED (json_decode আর needed নেই)
+    $contactInfo = getSetting('contact_info_cards', null);
+    
+    // Check if already an array
+    if (!is_array($contactInfo) || empty($contactInfo)) {
+        // Default contact info
         $contactInfo = [
             ['📍', 'ঠিকানা', getSetting('contact_address', 'বনগ্রাম স্কুল ও কলেজের সামনে')],
             ['📞', 'ফোন', getSetting('contact_phone', '+৮৮০ ১৭১১-০০০০০০')],
@@ -38,6 +35,7 @@
     // Success Message
     $successMessage = getSetting('contact_success_message', '✅ আপনার বার্তা পাঠানো হয়েছে। আমরা শীঘ্রই যোগাযোগ করবো।');
 @endphp
+
 @section('title', $pageTitle)
 
 @section('content')

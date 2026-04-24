@@ -102,7 +102,6 @@
             <div class="rounded-2xl border border-charcoal/10 bg-white p-6 shadow-soft">
                 <h2 class="font-display text-xl font-bold mb-5">📍 ডেলিভারি ঠিকানা</h2>
 
-                {{-- Saved addresses --}}
                 <template x-if="loggedIn && addresses.length > 0">
                     <div class="space-y-2 mb-5">
                         <p class="text-xs font-bold uppercase tracking-wider text-charcoal/55">সংরক্ষিত ঠিকানা থেকে বেছে নিন
@@ -213,9 +212,8 @@
                         <dd class="font-bold text-lg text-primary">৳<span x-text="total.toLocaleString()"></span></dd>
                     </div>
                 </dl>
-                <div class="mt-4 rounded-xl bg-cream p-3 text-xs text-charcoal/65" x-show="deliveryFee > 0">
-                    💡 আরও ৳<span x-text="(freeMin - subtotal).toLocaleString()"></span> অর্ডার করলে ডেলিভারি ফ্রি!
-                </div>
+                <div class="mt-4 rounded-xl bg-cream p-3 text-xs text-charcoal/65" x-show="deliveryFee > 0">💡 আরও ৳<span
+                        x-text="(freeMin - subtotal).toLocaleString()"></span> অর্ডার করলে ডেলিভারি ফ্রি!</div>
             </div>
         </div>
 
@@ -223,15 +221,8 @@
         <div x-show="step === 3" x-transition class="grid gap-6 lg:grid-cols-[1fr,360px]">
             <div class="rounded-2xl border border-charcoal/10 bg-white p-6 shadow-soft">
                 <h2 class="font-display text-xl font-bold mb-5">💳 পেমেন্ট পদ্ধতি</h2>
-
                 <div class="space-y-3">
-                    @php
-                        $methods = [
-                            ['cod', 'ক্যাশ অন ডেলিভারি', '💵', 'খাবার পেয়ে নগদ পরিশোধ'],
-                            ['bkash', 'bKash', '📱', 'মার্চেন্ট: 018XXXXXXXX'],
-                            ['nagad', 'Nagad', '💳', 'মার্চেন্ট: 018XXXXXXXX'],
-                        ];
-                    @endphp
+                    @php $methods = [['cod','ক্যাশ অন ডেলিভারি','💵','খাবার পেয়ে নগদ পরিশোধ'],['bkash','bKash','📱','মার্চেন্ট: 018XXXXXXXX'],['nagad','Nagad','💳','মার্চেন্ট: 018XXXXXXXX']]; @endphp
                     @foreach ($methods as [$key, $label, $icon, $sub])
                         <label class="flex cursor-pointer items-center gap-4 rounded-xl border-2 p-4 transition"
                             :class="form.payment_method === '{{ $key }}' ? 'border-primary bg-primary/5' :
@@ -249,16 +240,13 @@
 
                 <template x-if="form.payment_method !== 'cod'">
                     <div class="mt-5 rounded-xl bg-cream p-4 space-y-3">
-                        <div class="text-xs text-charcoal/70">
-                            <strong x-text="form.payment_method === 'bkash' ? 'bKash' : 'Nagad'"></strong> দিয়ে
-                            <strong>৳<span x-text="total.toLocaleString()"></span></strong> Send Money করুন →
-                            মার্চেন্ট: <strong>018XXXXXXXX</strong>
-                        </div>
-                        <label class="block">
-                            <span class="text-xs font-bold text-charcoal/70">Transaction ID *</span>
-                            <input type="text" x-model="form.trx_id" placeholder="যেমন: 8N7M9P2Q3R"
-                                class="mt-1 w-full rounded-xl border border-charcoal/15 bg-white px-4 py-3 text-sm font-mono focus:border-primary focus:outline-none">
-                        </label>
+                        <div class="text-xs text-charcoal/70"><strong
+                                x-text="form.payment_method === 'bkash' ? 'bKash' : 'Nagad'"></strong> দিয়ে <strong>৳<span
+                                    x-text="total.toLocaleString()"></span></strong> Send Money করুন → মার্চেন্ট:
+                            <strong>018XXXXXXXX</strong></div>
+                        <label class="block"><span class="text-xs font-bold text-charcoal/70">Transaction ID
+                                *</span><input type="text" x-model="form.trx_id" placeholder="যেমন: 8N7M9P2Q3R"
+                                class="mt-1 w-full rounded-xl border border-charcoal/15 bg-white px-4 py-3 text-sm font-mono focus:border-primary focus:outline-none"></label>
                     </div>
                 </template>
 
@@ -272,10 +260,9 @@
                         class="rounded-full border border-charcoal/15 px-5 py-2.5 text-sm font-bold hover:border-primary hover:text-primary">←
                         পেছনে</button>
                     <button @click="placeOrder()" :disabled="loading"
-                        class="rounded-full bg-gradient-warm px-7 py-2.5 text-sm font-bold text-white shadow-warm hover:scale-[1.02] disabled:opacity-60">
-                        <span x-show="!loading">✅ অর্ডার নিশ্চিত করুন</span>
-                        <span x-show="loading">প্রসেসিং...</span>
-                    </button>
+                        class="rounded-full bg-gradient-warm px-7 py-2.5 text-sm font-bold text-white shadow-warm hover:scale-[1.02] disabled:opacity-60"><span
+                            x-show="!loading">✅ অর্ডার নিশ্চিত করুন</span><span
+                            x-show="loading">প্রসেসিং...</span></button>
                 </div>
             </div>
 
@@ -308,22 +295,41 @@
         {{-- STEP 4: SUCCESS --}}
         <div x-show="step === 4" x-transition class="mx-auto max-w-xl text-center">
             <div class="rounded-3xl border border-green-200 bg-white p-10 shadow-warm">
-                <div class="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-green-100 text-5xl">✅
+                <div class="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-green-100 text-5xl">
+                    <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
                 </div>
-                <h2 class="font-display text-2xl font-bold">অর্ডার সফল হয়েছে!</h2>
+
+                <h2 class="font-display text-2xl font-bold">🎉 অর্ডার সফল হয়েছে!</h2>
                 <p class="mt-2 text-charcoal/65">আপনার অর্ডারটি গৃহীত হয়েছে। শীঘ্রই কনফার্মেশন কল পাবেন।</p>
+
                 <div class="mt-6 inline-flex items-center gap-2 rounded-xl bg-cream px-5 py-3 text-sm font-mono">
                     <span class="text-charcoal/55">ইনভয়েস:</span>
                     <strong class="text-primary" x-text="successInvoice"></strong>
                 </div>
-                <div class="mt-8 flex justify-center gap-3">
-                    <a :href="successRedirect"
-                        class="rounded-full bg-gradient-warm px-6 py-2.5 text-sm font-bold text-white shadow-warm">বিস্তারিত
-                        দেখুন</a>
-                    <a href="{{ route('menu.index') }}"
-                        class="rounded-full border border-charcoal/15 px-6 py-2.5 text-sm font-bold hover:border-primary hover:text-primary">আরও
-                        অর্ডার</a>
+
+                <div class="mt-4">
+                    <a :href="trackingUrl"
+                        class="inline-flex items-center gap-2 rounded-full bg-blue-500 px-5 py-2 text-sm font-bold text-white hover:bg-blue-600 transition">
+                        <span>📍</span> লাইভ অর্ডার ট্র্যাক করুন
+                    </a>
                 </div>
+
+                <div class="mt-6 pt-4 border-t border-charcoal/10">
+                    <div class="flex flex-wrap justify-center gap-3">
+                        <a :href="successRedirect"
+                            class="rounded-full bg-gradient-warm px-6 py-2.5 text-sm font-bold text-white shadow-warm hover:scale-[1.02] transition">📋
+                            অর্ডার বিস্তারিত দেখুন</a>
+                        <a href="{{ route('menu.index') }}"
+                            class="rounded-full border border-charcoal/15 px-6 py-2.5 text-sm font-bold hover:border-primary hover:text-primary transition">🍽️
+                            আরও অর্ডার করুন</a>
+                    </div>
+                </div>
+
+                <p class="mt-6 text-xs text-charcoal/50">🔍 আপনার অর্ডার ট্র্যাক করতে পারেন: <a
+                        href="{{ route('order.track.form') }}" class="text-primary hover:underline">অর্ডার ট্র্যাক
+                        পেজে</a></p>
             </div>
         </div>
 
@@ -338,6 +344,7 @@
                 error: '',
                 successInvoice: '',
                 successRedirect: '#',
+                trackingUrl: '#',
                 addresses: init.addresses,
                 selectedAddressId: init.defaultId || (init.addresses.length > 0 ? init.addresses[0].id : 'new'),
                 loggedIn: init.loggedIn,
@@ -396,7 +403,7 @@
                     try {
                         const r = await fetch(
                             `${this.deliveryFeeUrl}?area=${encodeURIComponent(this.form.delivery_zone)}&subtotal=${this.subtotal}`
-                        );
+                            );
                         const d = await r.json();
                         this.deliveryFee = d.delivery_fee;
                         this.total = this.subtotal + this.deliveryFee;
@@ -440,24 +447,23 @@
                 },
 
                 goPayment() {
-                    // Validate all required fields
-                    if (!this.form.customer_name || !this.form.customer_name.trim()) {
+                    if (!this.form.customer_name?.trim()) {
                         alert('দয়া করে আপনার নাম লিখুন');
                         return;
                     }
-                    if (!this.form.phone || !this.form.phone.trim()) {
+                    if (!this.form.phone?.trim()) {
                         alert('দয়া করে ফোন নম্বর লিখুন');
                         return;
                     }
-                    if (!this.form.email || !this.form.email.trim()) {
+                    if (!this.form.email?.trim()) {
                         alert('দয়া করে ইমেইল ঠিকানা লিখুন');
                         return;
                     }
                     if (!this.form.email.includes('@') || !this.form.email.includes('.')) {
-                        alert('সঠিক ইমেইল ঠিকানা দিন (যেমন: example@gmail.com)');
+                        alert('সঠিক ইমেইল ঠিকানা দিন');
                         return;
                     }
-                    if (!this.form.address || !this.form.address.trim()) {
+                    if (!this.form.address?.trim()) {
                         alert('দয়া করে ঠিকানা লিখুন');
                         return;
                     }
@@ -470,21 +476,14 @@
 
                 async placeOrder() {
                     this.error = '';
-
-                    // Email validation
                     if (!this.form.email || !this.form.email.includes('@')) {
                         this.error = 'সঠিক ইমেইল ঠিকানা দিন';
                         return;
                     }
-
-                    // Transaction ID validation for mobile payment
-                    if (this.form.payment_method !== 'cod') {
-                        if (!this.form.trx_id || this.form.trx_id.length < 6) {
-                            this.error = 'Transaction ID আবশ্যক (কমপক্ষে ৬ অক্ষর)';
-                            return;
-                        }
+                    if (this.form.payment_method !== 'cod' && (!this.form.trx_id || this.form.trx_id.length < 6)) {
+                        this.error = 'Transaction ID আবশ্যক (কমপক্ষে ৬ অক্ষর)';
+                        return;
                     }
-
                     this.loading = true;
                     try {
                         const fullAddr = (this.form.area ? this.form.area + ', ' : '') + this.form.address;
@@ -498,35 +497,29 @@
                             notes: this.form.notes,
                             payment_method: this.form.payment_method,
                             trx_id: this.form.trx_id || null,
-                            address_id: this.form.address_id,
+                            address_id: this.form.address_id
                         };
-
                         const r = await fetch(this.storeUrl, {
                             method: 'POST',
                             headers: this._headers(),
                             body: JSON.stringify(payload)
                         });
-
                         const d = await r.json();
-
                         if (!r.ok || !d.ok) {
-                            this.error = d.message || 'অর্ডার ব্যর্থ হয়েছে। আবার চেষ্টা করুন।';
+                            this.error = d.message || 'অর্ডার ব্যর্থ হয়েছে।';
                             return;
                         }
-
                         this.successInvoice = d.invoice_no;
                         this.successRedirect = d.redirect;
+                        this.trackingUrl = `/order/track?invoice=${d.invoice_no}`;
                         this.step = 4;
-
                         window.dispatchEvent(new CustomEvent('cart-updated', {
                             detail: {
                                 count: 0
                             }
                         }));
-
                     } catch (e) {
-                        console.error('Order placement error:', e);
-                        this.error = 'নেটওয়ার্ক সমস্যা — ইন্টারনেট কানেকশন চেক করে আবার চেষ্টা করুন';
+                        this.error = 'নেটওয়ার্ক সমস্যা — আবার চেষ্টা করুন';
                     } finally {
                         this.loading = false;
                     }
@@ -537,7 +530,7 @@
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
                     };
                 },
             }

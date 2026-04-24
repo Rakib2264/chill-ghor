@@ -128,7 +128,8 @@ class CheckoutController extends Controller
                 'ok' => true,
                 'order_id' => $order->id,
                 'invoice_no' => $order->invoice_no,
-                'redirect' => route('checkout.success', $order),
+                'redirect' => route('my.orders.details', $order),  
+                'track_url' => route('order.track.form') . '?invoice=' . $order->invoice_no,  
                 'message' => '🎉 অর্ডার সফল হয়েছে!',
             ]);
         }

@@ -29,6 +29,7 @@ use App\Http\Controllers\WishlistController;
 use Illuminate\Support\Facades\Route;
 
 /* ---------- Public site ---------- */
+
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/menu', [MenuController::class, 'index'])->name('menu.index');
 Route::get('/menu/{product:slug}', [MenuController::class, 'show'])->name('menu.show');
@@ -160,3 +161,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('emails/send', [AdminEmailController::class, 'send'])->name('emails.send.store');
     Route::get('emails/history', [AdminEmailController::class, 'history'])->name('emails.history');
 });
+
+Route::get('/order/track', [App\Http\Controllers\OrderTrackingController::class, 'showForm'])->name('order.track.form');
+Route::post('/order/track', [App\Http\Controllers\OrderTrackingController::class, 'track'])->name('order.track');
+Route::get('/order/{invoice_no}/status', [App\Http\Controllers\OrderTrackingController::class, 'status'])->name('order.status');
