@@ -8,6 +8,7 @@ use App\Models\DeliveryZone;
 use App\Models\EmailLog;
 use App\Models\EmailTemplate;
 use App\Models\Order;
+use App\Models\Setting;
 use App\Support\Cart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -150,6 +151,8 @@ class CheckoutController extends Controller
 
         $this->sendOrderConfirmationEmail($order);
 
+        $this->sendAdminNotificationEmail($order);
+
         if ($request->wantsJson()) {
             return response()->json([
                 'ok' => true,
@@ -265,6 +268,120 @@ class CheckoutController extends Controller
                 $log->update(['status' => 'failed', 'error_message' => $e->getMessage()]);
             }
             \Log::error('Order email failed for #'.$order->invoice_no.': '.$e->getMessage());
+        }
+    }
+
+    /**
+     * অ্যাডমিনকে নোটিফিকেশন ইমেইল পাঠান
+     */
+    /**
+     * একাধিক অ্যাডমিনকে নোটিফিকেশন ইমেইল পাঠান
+     */
+    private function sendAdminNotificationEmail(Order $order)
+    {
+        try {
+            // পদ্ধতি ১: সেটিংস থেকে কমা সেপারেটেড ইমেইল
+            $adminEmailsString = Setting::get('admin_emails', 'admin@chillghor.com');
+
+            // কমা বা সেমিকোলন দিয়ে আলাদা করা ইমেইলগুলোকে array তে রূপান্তর
+            $adminEmails = preg_split('/[\s,;]+/', $adminEmailsString);
+            $adminEmails = array_filter($adminEmails, function ($email) {
+                return filter_var($email, FILTER_VALIDATE_EMAIL);
+            });
+
+            // পদ্ধতি ২: ডাটাবেজ থেকে সব অ্যাডমিন ইউজারের ইমেইল
+            // $adminEmails = \App\Models\User::where('is_admin', true)
+            //     ->whereNotNull('email')
+            //     ->pluck('email')
+            //     ->toArray();
+
+            if (empty($adminEmails)) {
+                \Log::warning('No admin emails found for notification');
+
+                return;
+            }
+
+            // অর্ডার আইটেম HTML তৈরি
+            $itemsHtml = '';
+            foreach ($order->items as $item) {
+                $itemsHtml .= "<tr>
+                <td style='padding:8px; border-bottom:1px solid #eee'>{$item->product_name}</td>
+                <td style='padding:8px; border-bottom:1px solid #eee'>{$item->quantity}</td>
+                <td style='padding:8px; border-bottom:1px solid #eee'>৳{$item->price}</td>
+                <td style='padding:8px; border-bottom:1px solid #eee'>৳{$item->line_total}</td>
+            </tr>";
+            }
+
+            $subject = "🛒 নতুন অর্ডার! #{$order->invoice_no} - চিল ঘর";
+
+            $htmlBody = "
+        <div style='font-family: Hind Siliguri, sans-serif; max-width:600px; margin:0 auto'>
+            <div style='background:linear-gradient(135deg,#c0392b,#e8671a); padding:20px; text-align:center; color:white'>
+                <h2>🍽️ চিল ঘর</h2>
+                <p>নতুন অর্ডার এসেছে!</p>
+            </div>
+            
+            <div style='padding:20px; background:#faf6ef'>
+                <div style='background:white; padding:15px; border-radius:12px; margin-bottom:15px'>
+                    <h3 style='margin:0 0 10px 0'>অর্ডার নং: #{$order->invoice_no}</h3>
+                    <p><strong>📅 সময়:</strong> {$order->created_at->format('d/m/Y h:i A')}</p>
+                </div>
+                
+                <div style='background:white; padding:15px; border-radius:12px; margin-bottom:15px'>
+                    <h4>👤 গ্রাহকের তথ্য</h4>
+                    <p><strong>নাম:</strong> {$order->customer_name}</p>
+                    <p><strong>📞 ফোন:</strong> {$order->phone}</p>
+                    <p><strong>📧 ইমেইল:</strong> {$order->customer_email}</p>
+                    <p><strong>📍 এলাকা:</strong> {$order->area}</p>
+                    <p><strong>🏠 ঠিকানা:</strong> {$order->address}</p>
+                    ".($order->notes ? "<p><strong>📝 নোট:</strong> {$order->notes}</p>" : '')."
+                </div>
+                
+                <div style='background:white; padding:15px; border-radius:12px; margin-bottom:15px'>
+                    <h4>🍕 অর্ডারকৃত আইটেম</h4>
+                    <table style='width:100%; border-collapse:collapse'>
+                        <thead>
+                            <tr><th style='text-align:left; padding:8px; background:#c0392b; color:white'>আইটেম</th>
+                                <th style='text-align:center; padding:8px; background:#c0392b; color:white'>পরিমাণ</th>
+                                <th style='text-align:right; padding:8px; background:#c0392b; color:white'>দাম</th>
+                                <th style='text-align:right; padding:8px; background:#c0392b; color:white'>মোট</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {$itemsHtml}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div style='background:white; padding:15px; border-radius:12px; text-align:right'>
+                    <p><strong>সাবটোটাল:</strong> ৳{$order->subtotal}</p>
+                    <p><strong>ডেলিভারি চার্জ:</strong> ৳{$order->delivery_fee}</p>
+                    ".($order->discount > 0 ? "<p><strong>ডিসকাউন্ট:</strong> ৳{$order->discount}</p>" : '')."
+                    <h3><strong>মোট:</strong> ৳{$order->total}</h3>
+                    <p><strong>💳 পেমেন্ট পদ্ধতি:</strong> ".strtoupper($order->payment_method)."</p>
+                </div>
+                
+                <div style='margin-top:20px; text-align:center'>
+                    <a href='".route('admin.orders.show', $order)."' 
+                       style='background:#c0392b; color:white; padding:12px 24px; text-decoration:none; border-radius:30px; display:inline-block'>
+                       📋 অর্ডার দেখুন ও স্ট্যাটাস আপডেট করুন
+                    </a>
+                </div>
+            </div>
+        </div>";
+
+            // ✅ একাধিক অ্যাডমিনকে ইমেইল পাঠান
+            foreach ($adminEmails as $adminEmail) {
+                try {
+                    Mail::to($adminEmail)->send(new GenericMail($subject, $htmlBody));
+                    \Log::info("Admin notification sent to {$adminEmail} for order #{$order->invoice_no}");
+                } catch (\Exception $e) {
+                    \Log::error("Failed to send to {$adminEmail}: ".$e->getMessage());
+                }
+            }
+
+        } catch (\Throwable $e) {
+            \Log::error("Admin notification email failed for #{$order->invoice_no}: ".$e->getMessage());
         }
     }
 }
