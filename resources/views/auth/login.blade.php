@@ -65,11 +65,11 @@
         </p>
       </div>
 
-      <div class="mt-5 rounded-xl bg-cream p-4 text-xs text-charcoal/70">
+      {{-- <div class="mt-5 rounded-xl bg-cream p-4 text-xs text-charcoal/70">
         <div class="font-bold text-charcoal">🔑 ডিফল্ট অ্যাডমিন</div>
         <div class="mt-1">ইমেইল: <span class="font-mono">admin@biyaibari.com</span></div>
         <div>পাসওয়ার্ড: <span class="font-mono">password</span></div>
-      </div>
+      </div> --}}
     </div>
 
     <div class="mt-4 text-center">
