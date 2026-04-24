@@ -19,7 +19,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Insert default settings
+        // Insert all default settings
         $settings = [
             // ==================== General Settings ====================
             ['key' => 'site_name', 'value' => 'চিল ঘর', 'type' => 'text', 'group' => 'general', 'label' => 'সাইটের নাম'],
@@ -80,12 +80,12 @@ return new class extends Migration
             ['key' => 'order_notification_email', 'value' => 'orders@chillghor.com', 'type' => 'text', 'group' => 'notification', 'label' => 'অর্ডার নোটিফিকেশন ইমেইল'],
             ['key' => 'admin_phone', 'value' => '01729542809', 'type' => 'text', 'group' => 'notification', 'label' => 'অ্যাডমিন ফোন নম্বর'],
 
-            // ==================== Email Settings (SMTP) - ✅ CORRECTED ====================
+            // ==================== Email Settings (SMTP) - ✅ cPanel Correct Configuration ====================
             ['key' => 'mail_host', 'value' => 'mail.chillghor.com', 'type' => 'string', 'group' => 'email', 'label' => 'SMTP Host'],
-            ['key' => 'mail_port', 'value' => '465', 'type' => 'string', 'group' => 'email', 'label' => 'SMTP Port'],  // ✅ 465 (not 587)
+            ['key' => 'mail_port', 'value' => '465', 'type' => 'string', 'group' => 'email', 'label' => 'SMTP Port'],
             ['key' => 'mail_username', 'value' => 'support@chillghor.com', 'type' => 'string', 'group' => 'email', 'label' => 'SMTP Username'],
-            ['key' => 'mail_password', 'value' => 'chillghor12*', 'type' => 'string', 'group' => 'email', 'label' => 'SMTP Password / App Password'],
-            ['key' => 'mail_encryption', 'value' => 'ssl', 'type' => 'string', 'group' => 'email', 'label' => 'Encryption'],  // ✅ 'ssl' (lowercase)
+            ['key' => 'mail_password', 'value' => 'chillghor12*', 'type' => 'string', 'group' => 'email', 'label' => 'SMTP Password'],
+            ['key' => 'mail_encryption', 'value' => 'ssl', 'type' => 'string', 'group' => 'email', 'label' => 'Encryption'],
             ['key' => 'mail_from', 'value' => 'support@chillghor.com', 'type' => 'string', 'group' => 'email', 'label' => 'From Address'],
             ['key' => 'mail_from_name', 'value' => 'Chill Ghor', 'type' => 'string', 'group' => 'email', 'label' => 'From Name'],
 
@@ -159,7 +159,6 @@ return new class extends Migration
         ];
 
         foreach ($settings as $setting) {
-            // Check if setting already exists to avoid duplicate key error
             $exists = DB::table('settings')->where('key', $setting['key'])->exists();
 
             if (!$exists) {
