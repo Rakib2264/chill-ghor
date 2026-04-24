@@ -1,7 +1,5 @@
 <?php
 
-// app/Http/Controllers/CheckoutController.php (Updated)
-
 namespace App\Http\Controllers;
 
 use App\Mail\GenericMail;
@@ -55,7 +53,7 @@ class CheckoutController extends Controller
         $data = $request->validate([
             'customer_name' => 'required|string|max:120',
             'phone' => 'required|string|max:30',
-            'email' => 'required|email',
+            'email' => 'required|email|max:120',
             'address' => 'required|string|max:500',
             'area' => 'nullable|string|max:120',
             'delivery_zone' => 'nullable|string|max:100',
@@ -83,9 +81,9 @@ class CheckoutController extends Controller
         $order = DB::transaction(function () use ($data, $items, $totals, $zone, $couponCode, $discount, $finalTotal, $couponSession) {
             $order = Order::create([
                 'user_id' => Auth::id(),
-                'invoice_no' => 'CH-'.strtoupper(Str::random(8)),
+                'invoice_no' => 'CH-' . strtoupper(Str::random(8)),
                 'customer_name' => $data['customer_name'],
-                'customer_email' => $data['email'], // ✅ ADD THIS
+                'customer_email' => $data['email'],
                 'phone' => $data['phone'],
                 'address' => $data['address'],
                 'area' => $data['area'] ?? null,
@@ -102,7 +100,7 @@ class CheckoutController extends Controller
             ]);
 
             // Increment coupon usage
-            if (! empty($couponSession['coupon_id'])) {
+            if (!empty($couponSession['coupon_id'])) {
                 Coupon::where('id', $couponSession['coupon_id'])->increment('used_count');
             }
 
@@ -122,35 +120,8 @@ class CheckoutController extends Controller
         Cart::clear();
         session()->forget('coupon');
 
-        // Send order confirmation email using admin-managed template
-        try {
-            $recipient = $order->customer_email ?: optional($order->user)->email;
-            if ($recipient) {
-                $rendered = EmailTemplate::render('order.confirmation', [
-                    'name' => $order->customer_name,
-                    'order_no' => $order->invoice_no,
-                    'total' => number_format($order->total),
-                ]);
-                if ($rendered) {
-                    $log = EmailLog::create([
-                        'email_template_id' => $rendered['template_id'] ?? null,
-                        'recipient_email' => $recipient,
-                        'recipient_name' => $order->customer_name,
-                        'subject' => $rendered['subject'],
-                        'audience' => 'order_confirmation',
-                        'status' => 'pending',
-                        'sent_by' => Auth::id(),
-                    ]);
-                    Mail::to($recipient)->send(new GenericMail($rendered['subject'], $rendered['body']));
-                    $log->update(['status' => 'sent', 'sent_at' => now()]);
-                }
-            }
-        } catch (\Throwable $e) {
-            if (isset($log)) {
-                $log->update(['status' => 'failed', 'error_message' => $e->getMessage()]);
-            }
-            \Log::warning('Order email failed: '.$e->getMessage());
-        }
+        // Send order confirmation email
+        $this->sendOrderConfirmationEmail($order);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -163,13 +134,72 @@ class CheckoutController extends Controller
         }
 
         return redirect()->route('checkout.success', $order)
-            ->with('toast', '🎉 অর্ডার সফল হয়েছে! ইনভয়েস: '.$order->invoice_no);
+            ->with('toast', '🎉 অর্ডার সফল হয়েছে! ইনভয়েস: ' . $order->invoice_no);
+    }
+
+    /**
+     * Send order confirmation email
+     */
+    private function sendOrderConfirmationEmail(Order $order)
+    {
+        try {
+            // Get valid recipient email
+            $recipient = null;
+            
+            if (!empty($order->customer_email) && filter_var($order->customer_email, FILTER_VALIDATE_EMAIL)) {
+                $recipient = $order->customer_email;
+            } elseif ($order->user && !empty($order->user->email) && filter_var($order->user->email, FILTER_VALIDATE_EMAIL)) {
+                $recipient = $order->user->email;
+            }
+
+            if (!$recipient) {
+                \Log::warning('No valid email found for order #' . $order->invoice_no);
+                return;
+            }
+
+            // Render email template
+            $rendered = EmailTemplate::render('order.confirmation', [
+                'name' => $order->customer_name,
+                'order_no' => $order->invoice_no,
+                'total' => number_format($order->total),
+            ]);
+
+            if (!$rendered) {
+                \Log::warning('Email template not found: order.confirmation');
+                return;
+            }
+
+            // Create email log
+            $log = EmailLog::create([
+                'email_template_id' => $rendered['template_id'] ?? null,
+                'recipient_email' => $recipient,
+                'recipient_name' => $order->customer_name,
+                'subject' => $rendered['subject'],
+                'audience' => 'order_confirmation',
+                'status' => 'pending',
+                'sent_by' => Auth::id(),
+            ]);
+
+            // Send email
+            Mail::to($recipient)->send(new GenericMail($rendered['subject'], $rendered['body']));
+            
+            // Update log
+            $log->update(['status' => 'sent', 'sent_at' => now()]);
+            
+            \Log::info('Order confirmation email sent to: ' . $recipient . ' for order #' . $order->invoice_no);
+            
+        } catch (\Throwable $e) {
+            if (isset($log)) {
+                $log->update(['status' => 'failed', 'error_message' => $e->getMessage()]);
+            }
+            \Log::error('Order email failed for order #' . $order->invoice_no . ': ' . $e->getMessage());
+        }
     }
 
     public function calculateDeliveryFee($area, $subtotal)
     {
         $zone = DeliveryZone::where('zone_name', 'like', "%{$area}%")->first();
-        if (! $zone) {
+        if (!$zone) {
             $zone = DeliveryZone::where('zone_name', 'বনগ্রাম এলাকা')->first();
         }
 
@@ -212,11 +242,11 @@ class CheckoutController extends Controller
         // Find matching delivery zone
         $zone = DeliveryZone::where('zone_name', 'like', "%{$area}%")->first();
 
-        if (! $zone) {
+        if (!$zone) {
             $zone = DeliveryZone::where('is_active', true)->first();
         }
 
-        if (! $zone) {
+        if (!$zone) {
             return response()->json([
                 'delivery_fee' => 60,
                 'total' => $subtotal + 60,

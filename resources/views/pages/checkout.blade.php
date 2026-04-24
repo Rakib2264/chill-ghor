@@ -354,7 +354,7 @@
                     address_id: init.defaultId,
                     customer_name: '',
                     phone: '',
-                     email: '',
+                    email: '',
                     area: '',
                     address: '',
                     delivery_zone: '',
@@ -373,6 +373,7 @@
                     this.form.address_id = addr.id;
                     this.form.customer_name = addr.recipient_name;
                     this.form.phone = addr.phone;
+                    this.form.email = addr.email || '';
                     this.form.area = addr.area || '';
                     this.form.address = addr.address_line;
                     this.form.delivery_zone = '';
@@ -384,6 +385,7 @@
                     this.form.address_id = null;
                     this.form.customer_name = '';
                     this.form.phone = '';
+                    this.form.email = '';
                     this.form.area = '';
                     this.form.address = '';
                     this.form.delivery_zone = '';
@@ -394,12 +396,14 @@
                     try {
                         const r = await fetch(
                             `${this.deliveryFeeUrl}?area=${encodeURIComponent(this.form.delivery_zone)}&subtotal=${this.subtotal}`
-                            );
+                        );
                         const d = await r.json();
                         this.deliveryFee = d.delivery_fee;
                         this.total = this.subtotal + this.deliveryFee;
                         this.freeMin = d.free_min;
-                    } catch (e) {}
+                    } catch (e) {
+                        console.error('Delivery fee update failed:', e);
+                    }
                 },
 
                 async updateQty(id, action) {
@@ -436,12 +440,29 @@
                 },
 
                 goPayment() {
-                    if (!this.form.customer_name || !this.form.phone || !this.form.address) {
-                        alert('সব আবশ্যক ক্ষেত্র পূরণ করুন');
+                    // Validate all required fields
+                    if (!this.form.customer_name || !this.form.customer_name.trim()) {
+                        alert('দয়া করে আপনার নাম লিখুন');
+                        return;
+                    }
+                    if (!this.form.phone || !this.form.phone.trim()) {
+                        alert('দয়া করে ফোন নম্বর লিখুন');
+                        return;
+                    }
+                    if (!this.form.email || !this.form.email.trim()) {
+                        alert('দয়া করে ইমেইল ঠিকানা লিখুন');
+                        return;
+                    }
+                    if (!this.form.email.includes('@') || !this.form.email.includes('.')) {
+                        alert('সঠিক ইমেইল ঠিকানা দিন (যেমন: example@gmail.com)');
+                        return;
+                    }
+                    if (!this.form.address || !this.form.address.trim()) {
+                        alert('দয়া করে ঠিকানা লিখুন');
                         return;
                     }
                     if (!this.form.delivery_zone) {
-                        alert('এলাকা নির্বাচন করুন');
+                        alert('দয়া করে ডেলিভারি এলাকা নির্বাচন করুন');
                         return;
                     }
                     this.step = 3;
@@ -449,17 +470,28 @@
 
                 async placeOrder() {
                     this.error = '';
-                    if ((this.form.payment_method !== 'cod') && (!this.form.trx_id || this.form.trx_id.length < 6)) {
-                        this.error = 'Transaction ID আবশ্যক (কমপক্ষে ৬ অক্ষর)';
+
+                    // Email validation
+                    if (!this.form.email || !this.form.email.includes('@')) {
+                        this.error = 'সঠিক ইমেইল ঠিকানা দিন';
                         return;
                     }
+
+                    // Transaction ID validation for mobile payment
+                    if (this.form.payment_method !== 'cod') {
+                        if (!this.form.trx_id || this.form.trx_id.length < 6) {
+                            this.error = 'Transaction ID আবশ্যক (কমপক্ষে ৬ অক্ষর)';
+                            return;
+                        }
+                    }
+
                     this.loading = true;
                     try {
                         const fullAddr = (this.form.area ? this.form.area + ', ' : '') + this.form.address;
                         const payload = {
                             customer_name: this.form.customer_name,
                             phone: this.form.phone,
-                             email: this.form.email,
+                            email: this.form.email,
                             address: fullAddr,
                             area: this.form.area,
                             delivery_zone: this.form.delivery_zone,
@@ -468,27 +500,33 @@
                             trx_id: this.form.trx_id || null,
                             address_id: this.form.address_id,
                         };
+
                         const r = await fetch(this.storeUrl, {
                             method: 'POST',
                             headers: this._headers(),
                             body: JSON.stringify(payload)
                         });
+
                         const d = await r.json();
+
                         if (!r.ok || !d.ok) {
-                            this.error = d.message || 'অর্ডার ব্যর্থ হয়েছে';
+                            this.error = d.message || 'অর্ডার ব্যর্থ হয়েছে। আবার চেষ্টা করুন।';
                             return;
                         }
 
                         this.successInvoice = d.invoice_no;
                         this.successRedirect = d.redirect;
                         this.step = 4;
+
                         window.dispatchEvent(new CustomEvent('cart-updated', {
                             detail: {
                                 count: 0
                             }
                         }));
+
                     } catch (e) {
-                        this.error = 'নেটওয়ার্ক সমস্যা — আবার চেষ্টা করুন';
+                        console.error('Order placement error:', e);
+                        this.error = 'নেটওয়ার্ক সমস্যা — ইন্টারনেট কানেকশন চেক করে আবার চেষ্টা করুন';
                     } finally {
                         this.loading = false;
                     }
