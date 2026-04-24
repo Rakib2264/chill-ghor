@@ -244,7 +244,7 @@
 </nav>
 
 {{-- Bottom nav height spacer — prevents content from hiding behind the bar --}}
-<div class="md:hidden h-20"></div>
+<div class="md:hidden"></div>
 
 {{-- Alpine global cart count store --}}
 <script>

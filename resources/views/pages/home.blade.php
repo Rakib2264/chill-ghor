@@ -35,10 +35,10 @@
             style="background:#e8671a;"></div>
 
         <div
-            class="relative mx-auto max-w-7xl px-4 pb-3 pt-2 sm:px-6 lg:grid lg:grid-cols-2 lg:items-center lg:gap-12 lg:px-8 lg:py-24">
+            class="relative mx-auto max-w-7xl px-4 pb-8 pt-6 sm:px-6 lg:grid lg:grid-cols-2 lg:items-center lg:gap-12 lg:px-8 lg:py-24">
             <div class="text-white">
                 {{-- top bar: logo area on mobile --}}
-                <div class="mb-2 flex items-center justify-between lg:hidden">
+                <div class="mb-5 flex items-center justify-between lg:hidden">
                     <span class="font-display text-lg font-black text-white">
                         চিল <span style="color:#f5a623">ঘর</span>
                     </span>
@@ -51,7 +51,7 @@
                 </div>
 
                 {{-- badge --}}
-                <span class="mb-2 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-bold"
+                <span class="mb-4 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-bold"
                     style="background:rgba(245,166,35,.12);border-color:rgba(245,166,35,.3);color:#f5a623;">
                     ☕ {{ getSetting('hero_tagline', 'বনগ্রামের প্রিয় আড্ডাখানা') }}
                 </span>
