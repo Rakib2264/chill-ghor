@@ -98,6 +98,75 @@ class ProductController extends Controller
         return back()->with('toast', '🔥 পণ্য চিরতরে মুছে ফেলা হয়েছে');
     }
 
+    public function homeManager()
+    {
+        $homeProducts = Product::where('show_on_home', true)
+            ->orderBy('home_order', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+        
+        return view('admin.products.home-manager', compact('homeProducts'));
+    }
+
+    public function updateHomeOrder(Request $request)
+    {
+        $request->validate([
+            'products' => 'required|array',
+            'products.*.id' => 'required|exists:products,id',
+            'products.*.order' => 'required|integer|min:0',
+        ]);
+
+        foreach ($request->products as $item) {
+            Product::where('id', $item['id'])->update(['home_order' => $item['order']]);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function toggleHome(Request $request, Product $product)
+    {
+        $request->validate([
+            'show_on_home' => 'required|boolean'
+        ]);
+
+        $product->update(['show_on_home' => $request->show_on_home]);
+        
+        return response()->json([
+            'success' => true,
+            'show_on_home' => $product->show_on_home
+        ]);
+    }
+
+    public function bulkHomeUpdate(Request $request)
+    {
+        $request->validate([
+            'product_ids' => 'required|array',
+            'product_ids.*' => 'exists:products,id',
+            'action' => 'required|in:add,remove'
+        ]);
+
+        if ($request->action === 'add') {
+            $maxOrder = Product::max('home_order') ?? 0;
+            
+            // FIXED: Changed comma to => in the foreach loop
+            foreach ($request->product_ids as $index => $productId) {
+                Product::where('id', $productId)->update([
+                    'show_on_home' => true,
+                    'home_order' => $maxOrder + $index + 1
+                ]);
+            }
+            $message = count($request->product_ids) . ' টি প্রোডাক্ট হোম পেইজে যোগ করা হয়েছে';
+        } else {
+            Product::whereIn('id', $request->product_ids)->update([
+                'show_on_home' => false,
+                'home_order' => 0
+            ]);
+            $message = count($request->product_ids) . ' টি প্রোডাক্ট হোম পেইজ থেকে সরানো হয়েছে';
+        }
+
+        return back()->with('toast', '✅ ' . $message);
+    }
+
     private function validateData(Request $request): array
     {
         return $request->validate([
@@ -111,10 +180,14 @@ class ProductController extends Controller
             'spicy'            => 'nullable|boolean',
             'active'           => 'nullable|boolean',
             'image_file'       => 'nullable|image|max:2048',
+            'show_on_home'     => 'nullable|boolean',
+            'home_order'       => 'nullable|integer|min:0',
         ]) + [
-            'popular' => $request->boolean('popular'),
-            'spicy'   => $request->boolean('spicy'),
-            'active'  => $request->boolean('active'),
+            'popular'      => $request->boolean('popular'),
+            'spicy'        => $request->boolean('spicy'),
+            'active'       => $request->boolean('active'),
+            'show_on_home' => $request->boolean('show_on_home'),
+            'home_order'   => $request->integer('home_order', 0),
         ];
     }
 

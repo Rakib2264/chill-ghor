@@ -24,8 +24,9 @@ class Product extends Model
         'popular',
         'spicy',
         'active',
+        'show_on_home',
+        'home_order',
     ];
-
 
     public function category(): BelongsTo
     {
@@ -65,13 +66,11 @@ class Product extends Model
         'popular' => 'boolean',
         'spicy' => 'boolean',
         'active' => 'boolean',
+        'show_on_home' => 'boolean',
+        'home_order' => 'integer',
         'price' => 'integer',
         'old_price' => 'integer',
-        'popular' => 'boolean',
-        'spicy'   => 'boolean',
-        'active'  => 'boolean',
     ];
-
 
     public function allReviews(): HasMany
     {
@@ -86,5 +85,14 @@ class Product extends Model
     public function reviewsCount(): int
     {
         return $this->reviews()->count();
+    }
+
+    public function scopeForHomePage($query, $limit = 8)
+    {
+        return $query->where('active', true)
+            ->where('show_on_home', true)
+            ->orderBy('home_order', 'asc')
+            ->orderBy('id', 'asc')
+            ->limit($limit);
     }
 }

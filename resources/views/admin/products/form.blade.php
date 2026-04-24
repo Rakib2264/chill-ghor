@@ -1,3 +1,4 @@
+{{-- resources/views/admin/products/form.blade.php --}}
 @extends('admin.layouts.app')
 @section('title', $product->exists ? 'পণ্য এডিট' : 'নতুন পণ্য')
 @section('header', $product->exists ? 'পণ্য এডিট: ' . $product->name : 'নতুন পণ্য যোগ')
@@ -50,13 +51,28 @@
 
     <section class="rounded-2xl border border-charcoal/10 bg-white p-6 shadow-soft">
       <h2 class="font-display text-lg font-bold">ফ্ল্যাগ ও স্ট্যাটাস</h2>
-      <div class="mt-4 grid gap-3 sm:grid-cols-3">
-        @foreach ([['popular','⭐ জনপ্রিয়'],['spicy','🌶️ ঝাল'],['active','✅ সক্রিয়']] as [$k, $label])
+      <div class="mt-4 grid gap-3 sm:grid-cols-4">
+        @foreach ([
+          ['popular','⭐ জনপ্রিয়'],
+          ['spicy','🌶️ ঝাল'],
+          ['active','✅ সক্রিয়'],
+          ['show_on_home','🏠 হোম পেইজে দেখান']
+        ] as [$k, $label])
           <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-charcoal/15 bg-cream px-4 py-3">
             <input type="checkbox" name="{{ $k }}" value="1" @checked(old($k, $product->{$k})) class="h-4 w-4 accent-primary">
             <span class="text-sm font-bold">{{ $label }}</span>
           </label>
         @endforeach
+      </div>
+
+      {{-- Home Order field - only show when product is set to show on home page --}}
+      <div id="homeOrderField" class="mt-4 {{ old('show_on_home', $product->show_on_home) ? '' : 'hidden' }}">
+        <label class="block">
+          <span class="text-xs font-bold text-charcoal/70">হোম পেইজে অর্ডার (ছোট সংখ্যা উপরে দেখাবে)</span>
+          <input type="number" name="home_order" min="0" value="{{ old('home_order', $product->home_order) }}" 
+                 class="mt-1 w-full rounded-xl border border-charcoal/15 bg-cream px-4 py-2.5 text-sm">
+          <p class="mt-1 text-xs text-charcoal/50">যেমন: ১, ২, ৩ — ১ সবচেয়ে উপরে দেখাবে</p>
+        </label>
       </div>
     </section>
   </div>
@@ -81,4 +97,22 @@
     <a href="{{ route('admin.products.index') }}" class="block text-center text-xs font-bold text-charcoal/60 hover:text-primary">← বাতিল</a>
   </aside>
 </form>
+
+@push('scripts')
+<script>
+  // Show/hide home order field based on checkbox selection
+  const showOnHomeCheckbox = document.querySelector('input[name="show_on_home"]');
+  const homeOrderField = document.getElementById('homeOrderField');
+  
+  if (showOnHomeCheckbox && homeOrderField) {
+    showOnHomeCheckbox.addEventListener('change', function() {
+      if (this.checked) {
+        homeOrderField.classList.remove('hidden');
+      } else {
+        homeOrderField.classList.add('hidden');
+      }
+    });
+  }
+</script>
+@endpush
 @endsection

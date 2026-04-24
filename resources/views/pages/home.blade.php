@@ -143,7 +143,6 @@
             <a href="{{ route('menu.index') }}" class="text-sm font-bold" style="color:#c0392b;">সব →</a>
         </div>
 
-        {{-- mobile: horizontal scroll, desktop: grid --}}
         <div
             class="flex gap-3 overflow-x-auto pb-2 scrollbar-none sm:grid sm:grid-cols-4 sm:overflow-visible lg:grid-cols-7">
             @foreach ($categories as $cat)
@@ -156,7 +155,7 @@
         </div>
     </section>
 
-    {{-- ===== POPULAR ITEMS ===== --}}
+    {{-- ===== HOME PAGE PRODUCTS (UPDATED) ===== --}}
     <section class="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
         <div class="mb-5 flex items-end justify-between">
             <div>
@@ -168,11 +167,14 @@
             <a href="{{ route('menu.index') }}" class="text-sm font-bold" style="color:#c0392b;">সব →</a>
         </div>
 
-        {{-- 2-col on mobile, 4-col on desktop --}}
         <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-            @foreach ($popular as $product)
+            @forelse ($homeProducts as $product)
                 @include('partials.product-card', ['product' => $product])
-            @endforeach
+            @empty
+                <div class="col-span-full rounded-2xl border border-charcoal/10 bg-cream/30 p-8 text-center">
+                    <p class="text-charcoal/50">কোন প্রোডাক্ট পাওয়া যায়নি</p>
+                </div>
+            @endforelse
         </div>
     </section>
 
@@ -212,7 +214,6 @@
     {{-- ===== CTA BANNER ===== --}}
     <section class="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
         <div class="relative overflow-hidden rounded-3xl p-6 sm:p-10" style="background:#1c0f09;">
-            {{-- decorative --}}
             <div
                 class="pointer-events-none absolute -right-12 -top-12 h-52 w-52 rounded-full border-[36px] border-red-700/20">
             </div>

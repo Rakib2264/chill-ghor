@@ -111,7 +111,7 @@
             </div>
             <div>
                 <div class="font-display font-bold text-[#f5ddd5] leading-tight">চিল ঘর</div>
-                <div class="text-[9px] uppercase tracking-widest text-white/35 mt-0.5">চিল ঘর</div>
+                <div class="text-[9px] uppercase tracking-widest text-white/35 mt-0.5">অ্যাডমিন</div>
             </div>
         </div>
 
@@ -121,6 +121,7 @@
                 ['route' => 'admin.pos.index', 'label' => 'পিওএস', 'icon' => '💳'],
                 ['route' => 'admin.orders.index', 'label' => 'অর্ডার', 'icon' => '🧾'],
                 ['route' => 'admin.products.index', 'label' => 'পণ্য', 'icon' => '🍽️'],
+                ['route' => 'admin.products.home-manager', 'label' => 'হোম পেজ ম্যানেজার', 'icon' => '🏠'],
                 ['route' => 'admin.products.trash', 'label' => 'পণ্য ট্র্যাশ', 'icon' => '🗑️'],
                 ['route' => 'admin.categories.index', 'label' => 'ক্যাটাগরি', 'icon' => '🏷️'],
                 ['route' => 'admin.coupons.index', 'label' => 'কুপন', 'icon' => '🎟️'],

@@ -22,6 +22,7 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CouponController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MenuController;
+use App\Http\Controllers\OrderTrackingController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReviewController;
@@ -114,6 +115,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::delete('products/{id}/force', [AdminProductController::class, 'forceDelete'])->name('products.force');
     Route::resource('products', AdminProductController::class)->except('show');
 
+    Route::post('/products/update-home-order', [AdminProductController::class, 'updateHomeOrder'])
+        ->name('products.update-home-order');
+
+    // Add the new home manager page route
+    Route::get('/products/home-manager', [AdminProductController::class, 'homeManager'])
+        ->name('products.home-manager');
+
     Route::get('categories', [AdminCategoryController::class, 'index'])->name('categories.index');
     Route::post('categories', [AdminCategoryController::class, 'store'])->name('categories.store');
     Route::patch('categories/{category}', [AdminCategoryController::class, 'update'])->name('categories.update');
@@ -162,6 +170,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('emails/history', [AdminEmailController::class, 'history'])->name('emails.history');
 });
 
-Route::get('/order/track', [App\Http\Controllers\OrderTrackingController::class, 'showForm'])->name('order.track.form');
-Route::post('/order/track', [App\Http\Controllers\OrderTrackingController::class, 'track'])->name('order.track');
-Route::get('/order/{invoice_no}/status', [App\Http\Controllers\OrderTrackingController::class, 'status'])->name('order.status');
+Route::get('/order/track', [OrderTrackingController::class, 'showForm'])->name('order.track.form');
+Route::post('/order/track', [OrderTrackingController::class, 'track'])->name('order.track');
+Route::get('/order/{invoice_no}/status', [OrderTrackingController::class, 'status'])->name('order.status');
