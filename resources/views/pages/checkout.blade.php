@@ -384,7 +384,16 @@
                 },
 
                 get totalAfterDiscount() {
-                    return Math.max(0, this.subtotal + this.deliveryFee - this.discount);
+                    // ✅ নিশ্চিতভাবে Number এ কনভার্ট করুন
+                    let subtotalNum = Number(this.subtotal) || 0;
+                    let deliveryNum = Number(this.deliveryFee) || 0;
+                    let discountNum = Number(this.discount) || 0;
+
+                    let result = subtotalNum + deliveryNum - discountNum;
+
+                    console.log('Calculation:', subtotalNum, '+', deliveryNum, '-', discountNum, '=', result);
+
+                    return Math.max(0, result);
                 },
 
                 get couponApplied() {
@@ -423,22 +432,45 @@
                 },
 
                 async updateDeliveryFee() {
-                    if (!this.form.delivery_zone) return;
+                    if (!this.form.delivery_zone) {
+                        console.log('No zone selected');
+                        return;
+                    }
+
+                    console.log('Updating delivery fee for zone:', this.form.delivery_zone);
+                    console.log('Current subtotal:', this.subtotal, 'type:', typeof this.subtotal);
+
                     try {
-                        // Find selected zone details
-                        const selectedZone = this.deliveryZones.find(z => z.zone_name === this.form.delivery_zone);
-                        if (selectedZone) {
-                            this.selectedZoneName = selectedZone.zone_name;
+                        // নিশ্চিত করুন subtotal Number এ আছে
+                        const subtotalNum = Number(this.subtotal) || 0;
+
+                        const url =
+                            `${this.deliveryFeeUrl}?area=${encodeURIComponent(this.form.delivery_zone)}&subtotal=${subtotalNum}`;
+                        console.log('Fetching URL:', url);
+
+                        const response = await fetch(url);
+                        const data = await response.json();
+
+                        console.log('API Response:', data);
+
+                        // ✅ গুরুত্বপূর্ণ: Number এ কনভার্ট করুন
+                        this.deliveryFee = Number(data.delivery_fee) || 0;
+                        this.freeMin = Number(data.free_min) || 500;
+
+                        // জোনের নাম সেট করুন
+                        if (data.zone_name) {
+                            this.selectedZoneName = data.zone_name;
+                        } else if (this.form.delivery_zone) {
+                            this.selectedZoneName = this.form.delivery_zone;
                         }
 
-                        const r = await fetch(
-                            `${this.deliveryFeeUrl}?area=${encodeURIComponent(this.form.delivery_zone)}&subtotal=${this.subtotal}`
-                        );
-                        const d = await r.json();
-                        this.deliveryFee = d.delivery_fee;
-                        this.freeMin = d.free_min;
-                    } catch (e) {
-                        console.error('Delivery fee update failed:', e);
+                        console.log('Updated deliveryFee:', this.deliveryFee, 'type:', typeof this.deliveryFee);
+                        console.log('Updated freeMin:', this.freeMin);
+
+                    } catch (error) {
+                        console.error('Delivery fee update failed:', error);
+                        this.deliveryFee = 60;
+                        this.freeMin = 500;
                     }
                 },
 
