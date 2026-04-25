@@ -37,19 +37,6 @@
         <div
             class="relative mx-auto max-w-7xl px-4 pb-8 pt-6 sm:px-6 lg:grid lg:grid-cols-2 lg:items-center lg:gap-12 lg:px-8 lg:py-24">
             <div class="text-white">
-                {{-- top bar: logo area on mobile --}}
-                <div class="mb-5 flex items-center justify-between lg:hidden">
-                    <span class="font-display text-lg font-black text-white">
-                        চিল <span style="color:#f5a623">ঘর</span>
-                    </span>
-                    <div class="flex gap-2">
-                        <span
-                            class="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-base">📍</span>
-                        <span
-                            class="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-base">🔔</span>
-                    </div>
-                </div>
-
                 {{-- badge --}}
                 <span class="mb-4 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-bold"
                     style="background:rgba(245,166,35,.12);border-color:rgba(245,166,35,.3);color:#f5a623;">
