@@ -12,7 +12,7 @@ class HomeController extends Controller
         $categories = Category::orderBy('sort_order')->get();
 
         // NEW: Get products configured for home page instead of just popular ones
-        $homeProducts = Product::forHomePage(8)->get();
+        $homeProducts = Product::forHomePage(12)->get();
 
         // If no products are configured for home page, fallback to popular products
         if ($homeProducts->isEmpty()) {
