@@ -114,7 +114,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::patch('products/{id}/restore', [AdminProductController::class, 'restore'])->name('products.restore');
     Route::delete('products/{id}/force', [AdminProductController::class, 'forceDelete'])->name('products.force');
     Route::resource('products', AdminProductController::class)->except('show');
-
+    Route::patch('products/{product}/toggle-status', [AdminProductController::class, 'toggleStatus'])
+        ->name('products.toggle-status');
     Route::post('/products/update-home-order', [AdminProductController::class, 'updateHomeOrder'])
         ->name('products.update-home-order');
 

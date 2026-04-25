@@ -217,4 +217,29 @@ class ProductController extends Controller
             Storage::disk('public')->delete(str_replace('storage/', '', $image));
         }
     }
+
+    public function toggleStatus(Request $request, $productId)
+    {
+        try {
+            // Find the product
+            $product = Product::find($productId);
+
+            if (!$product) {
+                return back()->with('error', 'পণ্যটি পাওয়া যায়নি');
+            }
+
+            // Validate the request
+            $request->validate([
+                'active' => 'required|boolean'
+            ]);
+
+            // Update the product status
+            $product->update(['active' => $request->active]);
+
+            // Return redirect with success message
+            return back()->with('toast', $product->active ? '✅ পণ্য সক্রিয় করা হয়েছে' : '⛔ পণ্য নিষ্ক্রিয় করা হয়েছে');
+        } catch (\Exception $e) {
+            return back()->with('error', 'স্ট্যাটাস পরিবর্তন করতে সমস্যা হয়েছে: ' . $e->getMessage());
+        }
+    }
 }
