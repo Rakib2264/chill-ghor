@@ -41,8 +41,10 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $data = $this->validateData($request);
+
         $data['slug'] = $this->uniqueSlug($data['name']);
         $data['image'] = $this->handleImage($request) ?? 'images/food/food-biryani.jpg';
+        $data['home_order'] = $data['home_order'] ?? 0;
 
         Product::create($data);
 
@@ -104,7 +106,7 @@ class ProductController extends Controller
             ->orderBy('home_order', 'asc')
             ->orderBy('id', 'asc')
             ->get();
-        
+
         return view('admin.products.home-manager', compact('homeProducts'));
     }
 
@@ -130,7 +132,7 @@ class ProductController extends Controller
         ]);
 
         $product->update(['show_on_home' => $request->show_on_home]);
-        
+
         return response()->json([
             'success' => true,
             'show_on_home' => $product->show_on_home
@@ -147,7 +149,7 @@ class ProductController extends Controller
 
         if ($request->action === 'add') {
             $maxOrder = Product::max('home_order') ?? 0;
-            
+
             // FIXED: Changed comma to => in the foreach loop
             foreach ($request->product_ids as $index => $productId) {
                 Product::where('id', $productId)->update([
