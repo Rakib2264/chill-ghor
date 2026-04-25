@@ -8,6 +8,8 @@
     <title>@yield('title', 'চিল ঘর — চা–কফির আড্ডা, ফাস্ট ফুডের আসল স্বাদ')</title>
     <meta name="description" content="@yield('description', 'চিল ঘর — বনগ্রাম স্কুল ও কলেজের সামনে, চা–কফি, কাচ্চি, ফুচকা, ফাস্টফুড। গ্রামীণ পরিবেশে শহরের আধুনিক ফিল।')">
 
+    <link rel="icon" type="image/png" href="{{ asset('images/logo/logo-removebg-preview.png') }}">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
