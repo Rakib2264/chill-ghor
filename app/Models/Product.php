@@ -26,7 +26,23 @@ class Product extends Model
         'active',
         'show_on_home',
         'home_order',
+        'stock',        // -1=unlimited, 0=out of stock, 1+=available
+        'views_count',
     ];
+
+    protected $casts = [
+        'popular'      => 'boolean',
+        'spicy'        => 'boolean',
+        'active'       => 'boolean',
+        'show_on_home' => 'boolean',
+        'price'        => 'integer',
+        'old_price'    => 'integer',
+        'stock'        => 'integer',
+        'views_count'  => 'integer',
+        'home_order'   => 'integer',
+    ];
+
+    // ─── Relationships ─────────────────────────────────────────────────────────
 
     public function category(): BelongsTo
     {
@@ -35,13 +51,24 @@ class Product extends Model
 
     public function reviews(): HasMany
     {
-        return $this->hasMany(Review::class)->where('is_approved', true)->latest();
+        return $this->hasMany(Review::class)
+            ->where('is_approved', true)
+            ->latest();
     }
+
+    public function allReviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    // ─── Route ─────────────────────────────────────────────────────────────────
 
     public function getRouteKeyName(): string
     {
         return 'slug';
     }
+
+    // ─── Image ─────────────────────────────────────────────────────────────────
 
     public function getImageUrlAttribute(): string
     {
@@ -49,6 +76,8 @@ class Product extends Model
         if (str_starts_with($this->image, 'http')) return $this->image;
         return asset($this->image);
     }
+
+    // ─── Reviews ───────────────────────────────────────────────────────────────
 
     public function getAverageRatingAttribute(): float
     {
@@ -58,23 +87,6 @@ class Product extends Model
     public function getReviewsCountAttribute(): int
     {
         return $this->reviews()->count();
-    }
-
-    protected $guarded = [];
-
-    protected $casts = [
-        'popular' => 'boolean',
-        'spicy' => 'boolean',
-        'active' => 'boolean',
-        'show_on_home' => 'boolean',
-        'home_order' => 'integer',
-        'price' => 'integer',
-        'old_price' => 'integer',
-    ];
-
-    public function allReviews(): HasMany
-    {
-        return $this->hasMany(Review::class);
     }
 
     public function averageRating(): float
@@ -87,12 +99,96 @@ class Product extends Model
         return $this->reviews()->count();
     }
 
-    public function scopeForHomePage($query, $limit = 8)
+    // ─── Stock helpers ─────────────────────────────────────────────────────────
+
+    /**
+     * স্টকে আছে কিনা
+     */
+    public function isInStock(): bool
+    {
+        return $this->stock === -1 || $this->stock > 0;
+    }
+
+    /**
+     * স্টক শেষ হয়ে গেছে কিনা
+     */
+    public function isOutOfStock(): bool
+    {
+        return $this->stock === 0;
+    }
+
+    /**
+     * সীমাহীন স্টক কিনা
+     */
+    public function isUnlimitedStock(): bool
+    {
+        return $this->stock === -1;
+    }
+
+    /**
+     * স্টক অবস্থার label
+     */
+    public function stockLabel(): string
+    {
+        if ($this->stock === -1) return 'unlimited';
+        if ($this->stock === 0)  return 'out_of_stock';
+        if ($this->stock <= 5)   return 'low_stock';
+        return 'available';
+    }
+
+    /**
+     * কার্টে সর্বোচ্চ কতটা যোগ করা যাবে
+     */
+    public function maxCartQty(): int
+    {
+        return $this->stock === -1 ? 99 : max(0, $this->stock);
+    }
+
+    // ─── View helpers ──────────────────────────────────────────────────────────
+
+    /**
+     * View count বাড়ান (session দিয়ে একই user বারবার count হবে না)
+     */
+    public function incrementView(): void
+    {
+        $sessionKey = 'viewed_product_' . $this->id;
+        if (!session()->has($sessionKey)) {
+            $this->increment('views_count');
+            session()->put($sessionKey, true);
+        }
+    }
+
+    /**
+     * 1.2K / 1.5M format-এ view count
+     */
+    public function getViewsLabelAttribute(): string
+    {
+        $v = $this->views_count ?? 0;
+        if ($v >= 1_000_000) return round($v / 1_000_000, 1) . 'M';
+        if ($v >= 1_000)     return round($v / 1_000, 1) . 'K';
+        return (string) $v;
+    }
+
+    // ─── Scopes ────────────────────────────────────────────────────────────────
+
+    public function scopeActive($query)
+    {
+        return $query->where('active', true);
+    }
+
+    public function scopeInStock($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('stock', -1)->orWhere('stock', '>', 0);
+        });
+    }
+
+    public function scopeForHomePage($query, int $limit = 12)
     {
         return $query->where('active', true)
             ->where('show_on_home', true)
-            ->orderBy('home_order', 'asc')
-            ->orderBy('id', 'asc')
+            ->orderBy('home_order')
+            ->orderBy('id')
             ->limit($limit);
     }
 }

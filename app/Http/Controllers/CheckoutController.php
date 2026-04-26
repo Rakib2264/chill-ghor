@@ -30,10 +30,10 @@ class CheckoutController extends Controller
         // ─── ঠিকানাগুলো delivery zone সহ লোড করুন ────────────────────────────
         $addresses = $user
             ? $user->addresses()
-                ->with('deliveryZone')   // ← zone eager-load
-                ->orderByDesc('is_default')
-                ->latest()
-                ->get()
+            ->with('deliveryZone')   // ← zone eager-load
+            ->orderByDesc('is_default')
+            ->latest()
+            ->get()
             : collect();
 
         $defaultAddress = $addresses->firstWhere('is_default', true) ?? $addresses->first();
@@ -111,7 +111,7 @@ class CheckoutController extends Controller
         $order = DB::transaction(function () use ($data, $items, $totals, $zone, $couponCode, $discount, $finalTotal, $couponSession) {
             $order = Order::create([
                 'user_id' => Auth::id(),
-                'invoice_no' => 'CH-'.strtoupper(Str::random(8)),
+                'invoice_no' => 'CH-' . strtoupper(Str::random(8)),
                 'customer_name' => $data['customer_name'],
                 'customer_email' => $data['email'],
                 'phone' => $data['phone'],
@@ -135,12 +135,17 @@ class CheckoutController extends Controller
 
             foreach ($items as $item) {
                 $order->items()->create([
-                    'product_id' => $item['product']->id,
+                    'product_id'   => $item['product']->id,
                     'product_name' => $item['product']->name,
-                    'price' => $item['product']->price,
-                    'quantity' => $item['qty'],
-                    'line_total' => $item['product']->price * $item['qty'],
+                    'price'        => $item['product']->price,
+                    'quantity'     => $item['qty'],
+                    'line_total'   => $item['product']->price * $item['qty'],
                 ]);
+
+                // ✅ Stock deduct (unlimited = -1 হলে deduct না করি)
+                if ($item['product']->stock !== -1) {
+                    $item['product']->decrement('stock', $item['qty']);
+                }
             }
 
             return $order;
@@ -158,13 +163,13 @@ class CheckoutController extends Controller
                 'ok' => true,
                 'order_id' => $order->id,
                 'invoice_no' => $order->invoice_no,
-                'track_url' => route('order.track.form').'?invoice='.$order->invoice_no,
+                'track_url' => route('order.track.form') . '?invoice=' . $order->invoice_no,
                 'message' => '🎉 অর্ডার সফল হয়েছে!',
             ]);
         }
 
         return redirect()->route('checkout.success', $order)
-            ->with('toast', '🎉 অর্ডার সফল হয়েছে! ইনভয়েস: '.$order->invoice_no);
+            ->with('toast', '🎉 অর্ডার সফল হয়েছে! ইনভয়েস: ' . $order->invoice_no);
     }
 
     // ─── Delivery fee API (unchanged) ─────────────────────────────────────────
@@ -235,7 +240,7 @@ class CheckoutController extends Controller
                 $recipient = $order->user->email;
             }
             if (! $recipient) {
-                \Log::warning('No valid email for order #'.$order->invoice_no);
+                \Log::warning('No valid email for order #' . $order->invoice_no);
 
                 return;
             }
@@ -267,7 +272,7 @@ class CheckoutController extends Controller
             if (isset($log)) {
                 $log->update(['status' => 'failed', 'error_message' => $e->getMessage()]);
             }
-            \Log::error('Order email failed for #'.$order->invoice_no.': '.$e->getMessage());
+            \Log::error('Order email failed for #' . $order->invoice_no . ': ' . $e->getMessage());
         }
     }
 
@@ -334,7 +339,7 @@ class CheckoutController extends Controller
                     <p><strong>📧 ইমেইল:</strong> {$order->customer_email}</p>
                     <p><strong>📍 এলাকা:</strong> {$order->area}</p>
                     <p><strong>🏠 ঠিকানা:</strong> {$order->address}</p>
-                    ".($order->notes ? "<p><strong>📝 নোট:</strong> {$order->notes}</p>" : '')."
+                    " . ($order->notes ? "<p><strong>📝 নোট:</strong> {$order->notes}</p>" : '') . "
                 </div>
                 
                 <div style='background:white; padding:15px; border-radius:12px; margin-bottom:15px'>
@@ -356,13 +361,13 @@ class CheckoutController extends Controller
                 <div style='background:white; padding:15px; border-radius:12px; text-align:right'>
                     <p><strong>সাবটোটাল:</strong> ৳{$order->subtotal}</p>
                     <p><strong>ডেলিভারি চার্জ:</strong> ৳{$order->delivery_fee}</p>
-                    ".($order->discount > 0 ? "<p><strong>ডিসকাউন্ট:</strong> ৳{$order->discount}</p>" : '')."
+                    " . ($order->discount > 0 ? "<p><strong>ডিসকাউন্ট:</strong> ৳{$order->discount}</p>" : '') . "
                     <h3><strong>মোট:</strong> ৳{$order->total}</h3>
-                    <p><strong>💳 পেমেন্ট পদ্ধতি:</strong> ".strtoupper($order->payment_method)."</p>
+                    <p><strong>💳 পেমেন্ট পদ্ধতি:</strong> " . strtoupper($order->payment_method) . "</p>
                 </div>
                 
                 <div style='margin-top:20px; text-align:center'>
-                    <a href='".route('admin.orders.show', $order)."' 
+                    <a href='" . route('admin.orders.show', $order) . "' 
                        style='background:#c0392b; color:white; padding:12px 24px; text-decoration:none; border-radius:30px; display:inline-block'>
                        📋 অর্ডার দেখুন ও স্ট্যাটাস আপডেট করুন
                     </a>
@@ -376,12 +381,11 @@ class CheckoutController extends Controller
                     Mail::to($adminEmail)->send(new GenericMail($subject, $htmlBody));
                     \Log::info("Admin notification sent to {$adminEmail} for order #{$order->invoice_no}");
                 } catch (\Exception $e) {
-                    \Log::error("Failed to send to {$adminEmail}: ".$e->getMessage());
+                    \Log::error("Failed to send to {$adminEmail}: " . $e->getMessage());
                 }
             }
-
         } catch (\Throwable $e) {
-            \Log::error("Admin notification email failed for #{$order->invoice_no}: ".$e->getMessage());
+            \Log::error("Admin notification email failed for #{$order->invoice_no}: " . $e->getMessage());
         }
     }
 }

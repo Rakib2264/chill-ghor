@@ -12,13 +12,10 @@ class HomeController extends Controller
     {
         $categories = Category::orderBy('sort_order')->get();
 
-        $homeProducts = Product::where('active', true)
-            ->where('show_on_home', true)
-            ->orderBy('home_order')
-            ->orderBy('id')
-            ->take(12)
-            ->get();
+        // হোম পেজের জন্য নির্বাচিত প্রোডাক্ট
+        $homeProducts = Product::forHomePage(12)->get();
 
+        // Fallback: popular products
         if ($homeProducts->isEmpty()) {
             $homeProducts = Product::where('popular', true)
                 ->where('active', true)
@@ -26,7 +23,7 @@ class HomeController extends Controller
                 ->get();
         }
 
-        // ✅ এটা যোগ করুন
+        // ✅ Ads for home page
         $ads = Advertisement::forPage('home');
 
         return view('pages.home', compact('categories', 'homeProducts', 'ads'));

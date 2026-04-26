@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Advertisement;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Review;
 use Illuminate\Http\Request;
-use App\Models\Advertisement;
 
 class MenuController extends Controller
 {
@@ -14,7 +14,7 @@ class MenuController extends Controller
     {
         $categories = Category::orderBy('sort_order')->get();
 
-        $query = Product::where('active', true);
+        $query = Product::with('category')->where('active', true);
 
         if ($request->filled('category') && $request->category !== 'all') {
             $cat = Category::where('slug', $request->category)->first();
@@ -25,13 +25,13 @@ class MenuController extends Controller
             $q = $request->q;
             $query->where(function ($w) use ($q) {
                 $w->where('name', 'like', "%{$q}%")
-                    ->orWhere('description', 'like', "%{$q}%");
+                  ->orWhere('description', 'like', "%{$q}%");
             });
         }
 
         $products = $query->orderBy('id')->get();
 
-        // ✅ এটা যোগ করুন
+        // ✅ Ads for menu page
         $ads = Advertisement::forPage('menu');
 
         return view('pages.menu', [
@@ -39,24 +39,28 @@ class MenuController extends Controller
             'products'   => $products,
             'activeCat'  => $request->get('category', 'all'),
             'search'     => $request->get('q', ''),
-            'ads'        => $ads,  // ✅
+            'ads'        => $ads,
         ]);
     }
 
     public function show(Product $product)
     {
+        // ✅ View count বাড়ান (session দিয়ে duplicate prevent)
+        $product->incrementView();
+
         $product->load(['reviews.user', 'category']);
 
         $related = Product::where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
             ->where('active', true)
-            ->take(4)->get();
+            ->take(4)
+            ->get();
 
-        // Has the current user already reviewed?
         $userReview = null;
         if (auth()->check()) {
             $userReview = Review::where('product_id', $product->id)
-                ->where('user_id', auth()->id())->first();
+                ->where('user_id', auth()->id())
+                ->first();
         }
 
         return view('pages.product', compact('product', 'related', 'userReview'));
