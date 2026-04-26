@@ -12,9 +12,8 @@ class SettingsController extends Controller
 {
     public function index()
     {
-        $groups = Setting::select('group')->distinct()->pluck('group');
-        $settings = Setting::all()->groupBy('group');
-
+        $groups   = Setting::select('group')->distinct()->orderBy('group')->pluck('group');
+        $settings = Setting::orderBy('id')->get()->groupBy('group');
         return view('admin.settings.index', compact('groups', 'settings'));
     }
 
@@ -22,96 +21,80 @@ class SettingsController extends Controller
     {
         $inputSettings = $request->input('settings', []);
 
-        // 🔥 Optimize query (no N+1)
+        if (empty($inputSettings)) {
+            return back()->with('toast', '⚠️ কোনো সেটিংস পাওয়া যায়নি');
+        }
+
+        // Load all relevant settings at once (no N+1)
         $allSettings = Setting::whereIn('key', array_keys($inputSettings))
             ->get()
             ->keyBy('key');
 
         foreach ($inputSettings as $key => $data) {
-
-            $setting = $allSettings[$key] ?? null;
+            $setting = $allSettings->get($key);
             if (!$setting) continue;
 
-            // 🔥 Skip image (handled later)
+            // Images handled separately below
             if ($setting->type === 'image') continue;
 
             $value = $data['value'] ?? null;
 
-            switch ($setting->type) {
+            // ✅ Type-safe casting
+            $value = match ($setting->type) {
+                'boolean' => (isset($data['value']) && in_array($data['value'], ['1', 1, true, 'true', 'on'], true)) ? '1' : '0',
+                'number'  => is_numeric($value) ? (string)(int)$value : '0',
+                'json'    => $this->sanitizeJson($value),
+                default   => (string)($value ?? ''),
+            };
 
-                case 'boolean':
-                    $value = ($value == '1') ? '1' : '0';
-                    break;
-
-                case 'number':
-                    $value = is_numeric($value) ? (string)$value : '0';
-                    break;
-
-                case 'json':
-                    if (!empty($value)) {
-                        $decoded = json_decode($value, true);
-                        if (json_last_error() === JSON_ERROR_NONE) {
-                            $value = json_encode($decoded);
-                        } else {
-                            continue; // skip invalid JSON
-                        }
-                    }
-                    break;
-
-                default:
-                    $value = $value ?? '';
-                    break;
-            }
+            // ✅ Skip invalid json
+            if ($setting->type === 'json' && $value === null) continue;
 
             $setting->update(['value' => $value]);
 
-            // clear cache
-            Cache::forget("setting.$key");
-
-            if ($setting->group) {
-                Cache::forget("settings.group.{$setting->group}");
-            }
+            // Clear cache
+            Cache::forget("setting.{$key}");
+            Cache::forget("settings.group.{$setting->group}");
         }
 
-        // 🔥 HANDLE IMAGE UPLOADS (ONLY HERE)
+        // ✅ Handle image uploads
         if ($request->hasFile('settings')) {
-
             foreach ($request->file('settings') as $key => $fileData) {
+                if (empty($fileData['file'])) continue;
 
-                if (!isset($fileData['file'])) continue;
-
-                $setting = $allSettings[$key] ?? null;
+                $setting = $allSettings->get($key);
                 if (!$setting || $setting->type !== 'image') continue;
 
                 $file = $fileData['file'];
+                if (!$file->isValid()) continue;
 
-                // delete old image
-                if ($setting->value &&
-                    !str_contains($setting->value, 'default') &&
-                    !str_contains($setting->value, 'logo.png') &&
-                    !str_contains($setting->value, 'hero.jpeg')
-                ) {
-                    $oldPath = str_replace('storage/', '', $setting->value);
-
+                // Delete old image (not default ones)
+                $oldValue = $setting->value;
+                if ($oldValue && str_starts_with($oldValue, 'storage/')) {
+                    $oldPath = str_replace('storage/', '', $oldValue);
                     if (Storage::disk('public')->exists($oldPath)) {
                         Storage::disk('public')->delete($oldPath);
                     }
                 }
 
                 $path = $file->store('settings', 'public');
+                $setting->update(['value' => 'storage/' . $path]);
 
-                $setting->update([
-                    'value' => 'storage/' . $path
-                ]);
-
-                Cache::forget("setting.$key");
-
-                if ($setting->group) {
-                    Cache::forget("settings.group.{$setting->group}");
-                }
+                Cache::forget("setting.{$key}");
+                Cache::forget("settings.group.{$setting->group}");
             }
         }
 
-        return back()->with('toast', '✅ সেটিংস সফলভাবে আপডেট হয়েছে');
+        return back()->with('toast', '✅ সেটিংস সফলভাবে সংরক্ষণ হয়েছে');
+    }
+
+    private function sanitizeJson(?string $value): ?string
+    {
+        if (empty($value)) return '[]';
+
+        $decoded = json_decode($value, true);
+        if (json_last_error() !== JSON_ERROR_NONE) return null; // signal to skip
+
+        return json_encode($decoded, JSON_UNESCAPED_UNICODE);
     }
 }

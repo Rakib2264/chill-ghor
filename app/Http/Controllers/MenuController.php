@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Review;
 use Illuminate\Http\Request;
+use App\Models\Advertisement;
 
 class MenuController extends Controller
 {
@@ -24,17 +25,21 @@ class MenuController extends Controller
             $q = $request->q;
             $query->where(function ($w) use ($q) {
                 $w->where('name', 'like', "%{$q}%")
-                  ->orWhere('description', 'like', "%{$q}%");
+                    ->orWhere('description', 'like', "%{$q}%");
             });
         }
 
         $products = $query->orderBy('id')->get();
+
+        // ✅ এটা যোগ করুন
+        $ads = Advertisement::forPage('menu');
 
         return view('pages.menu', [
             'categories' => $categories,
             'products'   => $products,
             'activeCat'  => $request->get('category', 'all'),
             'search'     => $request->get('q', ''),
+            'ads'        => $ads,  // ✅
         ]);
     }
 

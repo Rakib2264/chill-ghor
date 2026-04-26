@@ -114,7 +114,6 @@
                 <div class="text-[9px] uppercase tracking-widest text-white/35 mt-0.5">অ্যাডমিন</div>
             </div>
         </div>
-
         @php
             $nav = [
                 ['route' => 'admin.dashboard', 'label' => 'ড্যাশবোর্ড', 'icon' => '📊'],
@@ -132,6 +131,7 @@
                 ['route' => 'admin.emails.send', 'label' => 'ইমেইল পাঠান', 'icon' => '🚀'],
                 ['route' => 'admin.emails.history', 'label' => 'ইমেইল হিস্ট্রি', 'icon' => '🕘'],
                 ['route' => 'admin.delivery-zones.index', 'label' => 'ডেলিভারি জোন', 'icon' => '🚚'],
+                ['route' => 'admin.advertisements.index', 'label' => 'বিজ্ঞাপন', 'icon' => '📢'],
                 ['route' => 'admin.settings.index', 'label' => 'সেটিংস', 'icon' => '⚙️'],
             ];
         @endphp

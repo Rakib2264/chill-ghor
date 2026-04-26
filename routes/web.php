@@ -169,6 +169,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('emails/send', [AdminEmailController::class, 'create'])->name('emails.send');
     Route::post('emails/send', [AdminEmailController::class, 'send'])->name('emails.send.store');
     Route::get('emails/history', [AdminEmailController::class, 'history'])->name('emails.history');
+    
+    // Advertisements
+    Route::get('advertisements', [\App\Http\Controllers\Admin\AdvertisementController::class, 'index'])->name('advertisements.index');
+    Route::post('advertisements', [\App\Http\Controllers\Admin\AdvertisementController::class, 'store'])->name('advertisements.store');
+    Route::patch('advertisements/{advertisement}', [\App\Http\Controllers\Admin\AdvertisementController::class, 'update'])->name('advertisements.update');
+    Route::patch('advertisements/{advertisement}/toggle', [\App\Http\Controllers\Admin\AdvertisementController::class, 'toggle'])->name('advertisements.toggle');
+    Route::delete('advertisements/{advertisement}', [\App\Http\Controllers\Admin\AdvertisementController::class, 'destroy'])->name('advertisements.destroy');
 });
 
 Route::get('/order/track', [OrderTrackingController::class, 'showForm'])->name('order.track.form');

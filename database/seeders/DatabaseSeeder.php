@@ -13,7 +13,8 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             ProductSeeder::class,
             CouponSeeder::class,
-            DeliveryZoneSeeder::class
+            DeliveryZoneSeeder::class,
+            AdvertisementSeeder::class
         ]);
     }
 }
