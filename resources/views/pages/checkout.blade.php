@@ -525,25 +525,57 @@
                     }
                 },
 
+                // ✅ qty update — action: inc/dec পাঠাই
                 async updateQty(id, action) {
-                    const r = await fetch(`/cart/update/${id}`, {
-                        method: 'PATCH',
-                        headers: this._headers(),
-                        body: JSON.stringify({
-                            action
-                        })
-                    });
-                    const d = await r.json();
-                    if (d.ok) this._syncCart(d);
+                    try {
+                        const r = await fetch(`/cart/update/${id}`, {
+                            method: 'PATCH',
+                            headers: this._headers(),
+                            body: JSON.stringify({
+                                action
+                            })
+                        });
+                        const d = await r.json();
+                        if (d.ok) this._syncCart(d);
+                        else alert(d.message || 'আপডেট ব্যর্থ');
+                    } catch (e) {
+                        console.error('updateQty error:', e);
+                    }
                 },
 
+                // ✅ remove item
                 async removeItem(id) {
-                    const r = await fetch(`/cart/remove/${id}`, {
-                        method: 'DELETE',
-                        headers: this._headers()
-                    });
-                    const d = await r.json();
-                    if (d.ok) this._syncCart(d);
+                    if (!confirm('এই পণ্যটি কার্ট থেকে সরাবেন?')) return;
+                    try {
+                        const r = await fetch(`/cart/remove/${id}`, {
+                            method: 'DELETE',
+                            headers: this._headers()
+                        });
+                        const d = await r.json();
+                        if (d.ok) this._syncCart(d);
+                    } catch (e) {
+                        console.error('removeItem error:', e);
+                    }
+                },
+
+                // ✅ sync cart — items, subtotal, delivery আপডেট
+                _syncCart(d) {
+                    if (d.items !== undefined) {
+                        this.items = d.items;
+                    }
+                    if (d.subtotal !== undefined) {
+                        this.subtotal = Number(d.subtotal) || 0;
+                    }
+                    // delivery fee zone অনুযায়ী recalculate করি
+                    if (this.form.delivery_zone) {
+                        this.updateDeliveryFee();
+                    }
+                    // cart icon count আপডেট
+                    window.dispatchEvent(new CustomEvent('cart-updated', {
+                        detail: {
+                            count: d.count ?? 0
+                        }
+                    }));
                 },
 
                 _syncCart(d) {

@@ -87,27 +87,70 @@ class CartController extends Controller
 
     public function update(Request $request, Product $product)
     {
-        $qty = max(0, (int) $request->input('qty', 0));
+        // ✅ action (inc/dec) অথবা direct qty — দুটোই handle করি
+        if ($request->has('action')) {
+            $action  = $request->input('action'); // 'inc' or 'dec'
+            $current = Cart::getQty($product->id);
 
-        // Stock limit check on update
-        if ($qty > 0 && $product->stock !== -1 && $qty > $product->stock) {
-            $qty = $product->stock;
+            if ($action === 'inc') {
+                $qty = $current + 1;
+                // Stock limit check
+                if ($product->stock !== -1 && $qty > $product->stock) {
+                    $qty = $product->stock;
+                }
+            } elseif ($action === 'dec') {
+                $qty = max(0, $current - 1);
+            } else {
+                $qty = $current;
+            }
+        } else {
+            $qty = max(0, (int) $request->input('qty', 0));
+            if ($qty > 0 && $product->stock !== -1 && $qty > $product->stock) {
+                $qty = $product->stock;
+            }
         }
 
         Cart::update($product->id, $qty);
 
-        return $request->wantsJson()
-            ? response()->json(['ok' => true, 'count' => Cart::count()])
-            : back()->with('toast', 'কার্ট আপডেট হয়েছে');
+        // ✅ Checkout SPA-র জন্য full cart data return করি
+        if ($request->wantsJson()) {
+            return response()->json($this->cartJsonResponse());
+        }
+
+        return back()->with('toast', 'কার্ট আপডেট হয়েছে');
     }
 
     public function remove(Request $request, Product $product)
     {
         Cart::remove($product->id);
 
-        return $request->wantsJson()
-            ? response()->json(['ok' => true, 'count' => Cart::count()])
-            : back()->with('toast', 'পণ্য কার্ট থেকে সরানো হয়েছে');
+        if ($request->wantsJson()) {
+            return response()->json($this->cartJsonResponse());
+        }
+
+        return back()->with('toast', 'পণ্য কার্ট থেকে সরানো হয়েছে');
+    }
+
+    // ✅ নতুন private helper — checkout SPA-র জন্য full response
+    private function cartJsonResponse(): array
+    {
+        $items    = Cart::items();
+        $subtotal = Cart::subtotal();
+
+        return [
+            'ok'           => true,
+            'count'        => Cart::count(),
+            'subtotal'     => $subtotal,
+            'delivery_fee' => 60, // default, SPA নিজে zone অনুযায়ী update করবে
+            'items'        => $items->map(fn($i) => [
+                'id'    => $i['product']->id,
+                'name'  => $i['product']->name,
+                'price' => (int) $i['product']->price,
+                'qty'   => $i['qty'],
+                'image' => $i['product']->image_url,
+                'total' => (int) ($i['product']->price * $i['qty']),
+            ])->values(),
+        ];
     }
 
     public function clear()
