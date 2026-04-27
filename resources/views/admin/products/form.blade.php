@@ -133,7 +133,7 @@
             </div>
             @if($product->exists)
               <div class="mt-2 text-[10px] text-charcoal/40">
-                👁 {{ number_format($product->views_count ?? 0) }} বার দেখা হয়েছে
+               <i class="fas fa-eye"></i> {{ number_format($product->views_count ?? 0) }} বার দেখা হয়েছে
               </div>
             @endif
           </div>

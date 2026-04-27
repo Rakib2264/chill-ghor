@@ -56,7 +56,7 @@
         {{-- View count (bottom right) --}}
         <div class="absolute bottom-2 right-2 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold text-white"
              style="background:rgba(0,0,0,.4)">
-            👁 {{ $product->views_label }}
+            <i class="fas fa-eye"></i> {{ $product->views_label }}
         </div>
     </a>
 

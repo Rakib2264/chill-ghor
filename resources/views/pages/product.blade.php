@@ -137,7 +137,7 @@
                                 {{-- View count --}}
                                 <div class="flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold text-white"
                                     style="background:rgba(0,0,0,.45)">
-                                    👁 {{ $product->views_label }} ভিউ
+                                    <i class="fas fa-eye"></i> {{ $product->views_label }} ভিউ
                                 </div>
                             </div>
                         </div>
