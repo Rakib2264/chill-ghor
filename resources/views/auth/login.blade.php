@@ -56,8 +56,7 @@
                 </div>
                 <div class="text-left">
                     <div class="font-display text-2xl font-bold">চিল ঘর</div>
-                    <div class="text-[10px] uppercase tracking-widest text-charcoal/60">Admin Login</div>
-                </div>
+                 </div>
             </div>
 
             <div class="rounded-3xl border border-charcoal/10 bg-white p-8 shadow-warm">

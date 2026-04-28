@@ -119,9 +119,9 @@
     </div>
 
     {{-- ===== ADVERTISEMENTS ===== --}}
-  <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      @include('partials.advertisement', ['ads' => $ads])
-  </div>
+    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        @include('partials.advertisement', ['ads' => $ads])
+    </div>
 
     {{-- ===== CATEGORIES ===== --}}
     <section class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
