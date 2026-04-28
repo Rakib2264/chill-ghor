@@ -240,7 +240,7 @@
     </div>
 </nav>
 
-<div class="md:hidden" style="height: calc(60px + env(safe-area-inset-bottom));"></div>
+<div class="md:hidden"></div>
 
 <script>
     document.addEventListener('alpine:init', () => {
