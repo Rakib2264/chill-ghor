@@ -63,6 +63,7 @@ class PosController extends Controller
             'items.*.id'     => 'required|exists:products,id',
             'items.*.qty'    => 'required|integer|min:1',
             'discount'       => 'nullable|integer|min:0',
+            'delivery_fee'   => 'nullable|integer|min:0',
         ]);
 
         $order = DB::transaction(function () use ($data) {
@@ -84,7 +85,8 @@ class PosController extends Controller
             }
 
             $discount = (int) ($data['discount'] ?? 0);
-            $total    = max(0, $subtotal - $discount);
+            $delivery_fee = (int) ($data['delivery_fee'] ?? 0);
+            $total    = max(0, ($subtotal - $discount) + $delivery_fee);
 
             $order = Order::create([
                 'user_id'        => auth()->id(),
@@ -94,7 +96,7 @@ class PosController extends Controller
                 'address'        => 'In-Store (POS)',
                 'payment_method' => $data['payment_method'] === 'cash' ? 'cod' : $data['payment_method'],
                 'subtotal'       => $subtotal,
-                'delivery_fee'   => 0,
+                'delivery_fee'   => $delivery_fee,
                 'total'          => $total,
                 'status'         => 'delivered',
             ]);

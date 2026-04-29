@@ -19,8 +19,8 @@ class OrderController extends Controller
             $q = $request->q;
             $query->where(function ($w) use ($q) {
                 $w->where('invoice_no', 'like', "%{$q}%")
-                  ->orWhere('phone', 'like', "%{$q}%")
-                  ->orWhere('customer_name', 'like', "%{$q}%");
+                    ->orWhere('phone', 'like', "%{$q}%")
+                    ->orWhere('customer_name', 'like', "%{$q}%");
             });
         }
 
@@ -49,5 +49,33 @@ class OrderController extends Controller
     {
         $order->delete();
         return redirect()->route('admin.orders.index')->with('toast', '🗑️ অর্ডার মুছে ফেলা হয়েছে');
+    }
+    public function printInvoice($id)
+    {
+        $order = Order::with('items')->findOrFail($id);
+
+        return response()->json([
+            'id' => $order->id,
+            'invoice_no' => $order->invoice_no,
+            'customer_name' => $order->customer_name,
+            'phone' => $order->phone,
+            'address' => $order->address,
+            'date' => $order->created_at,
+            'subtotal' => $order->subtotal,
+            'discount' => $order->discount ?? 0,
+            'delivery_fee' => $order->delivery_fee,
+            'total' => $order->total,
+            'payment_method' => $order->payment_method,
+            'trx_id' => $order->trx_id,
+            'business_name' => 'আপনার ব্যবসার নাম',
+            'items' => $order->items->map(function ($item) {
+                return [
+                    'product_name' => $item->product_name,
+                    'price' => $item->price,
+                    'quantity' => $item->quantity,
+                    'line_total' => $item->line_total
+                ];
+            })
+        ]);
     }
 }

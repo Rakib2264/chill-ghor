@@ -107,7 +107,9 @@
         :class="sidebar && '!translate-x-0'">
 
         <div class="flex h-16 items-center gap-3 border-b border-white/10 px-5">
-            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-warm shadow-warm text-lg">☕
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-warm shadow-warm text-lg">
+                <img src="{{ asset('images/logo/logo-removebg-preview.png') }}" alt="logo"
+                    class="h-8 w-8 object-contain">
             </div>
             <div>
                 <div class="font-display font-bold text-[#f5ddd5] leading-tight">চিল ঘর</div>
