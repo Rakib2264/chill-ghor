@@ -16,7 +16,10 @@
 {{-- ========== SEO META TAGS ========== --}}
 @section('title', $product->name . ' - অর্ডার করুন | চিল ঘর')
 
-@section('description', strip_tags($product->description) . ' - চিল ঘর রেস্তোরাঁয় অনলাইনে অর্ডার করুন। দ্রুত ডেলিভারি, সাশ্রয়ী মূল্য।')
+@section('description',
+    strip_tags($product->description) .
+    ' - চিল ঘর রেস্তোরাঁয় অনলাইনে অর্ডার করুন। দ্রুত ডেলিভারি,
+    সাশ্রয়ী মূল্য।')
 
 @section('keywords', $product->name . ', ' . $product->category->name . ', চিল ঘর, রেস্তোরাঁ, খাবার ডেলিভারি, বনগ্রাম')
 
