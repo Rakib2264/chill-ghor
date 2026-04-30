@@ -13,6 +13,23 @@
     };
 @endphp
 
+{{-- ========== SEO META TAGS ========== --}}
+@section('title', $product->name . ' - অর্ডার করুন | চিল ঘর')
+
+@section('description', strip_tags($product->description) . ' - চিল ঘর রেস্তোরাঁয় অনলাইনে অর্ডার করুন। দ্রুত ডেলিভারি, সাশ্রয়ী মূল্য।')
+
+@section('keywords', $product->name . ', ' . $product->category->name . ', চিল ঘর, রেস্তোরাঁ, খাবার ডেলিভারি, বনগ্রাম')
+
+{{-- Open Graph (Facebook, WhatsApp) --}}
+@section('og_title', $product->name . ' - চিল ঘর')
+@section('og_description', strip_tags($product->description) . ' - এখনই অর্ডার করুন')
+@section('og_image', asset($product->image_url))
+
+{{-- Twitter Card --}}
+@section('twitter_title', $product->name . ' - চিল ঘর')
+@section('twitter_description', strip_tags($product->description))
+@section('twitter_image', asset($product->image_url))
+
 @section('content')
     <div class="min-h-screen" style="background:#f8f4f0;">
 

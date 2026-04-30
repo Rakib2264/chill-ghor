@@ -3,17 +3,24 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'চিল ঘর — চা–কফির আড্ডা, ফাস্ট ফুডের আসল স্বাদ')</title>
     <meta name="description" content="@yield('description', 'চিল ঘর — বনগ্রাম স্কুল ও কলেজের সামনে, চা–কফি, কাচ্চি, ফুচকা, ফাস্টফুড। গ্রামীণ পরিবেশে শহরের আধুনিক ফিল।')">
+    <meta name="keywords" content="রেস্তোরাঁ, চা, কফি, ফাস্ট ফুড, কাচ্চি, ফুচকা, বিরিয়ানি, বনগ্রাম">
+    <meta name="author" content="চিল ঘর">
+    <meta property="og:title" content="@yield('title', 'চিল ঘর')">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:image" content="{{ asset('images/logo/logo-removebg-preview.png') }}">
+    <meta property="og:description" content="@yield('description', 'চিল ঘর — বনগ্রাম স্কুল ও কলেজের সামনে')">
+    <meta name="twitter:card" content="summary_large_image">
 
     <link rel="icon" type="image/png" href="{{ asset('images/logo/logo-removebg-preview.png') }}">
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Tiro+Bangla:ital@0;1&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700;800&family=Tiro+Bangla:ital@0;1&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <script src="https://cdn.tailwindcss.com"></script>
