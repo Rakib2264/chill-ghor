@@ -30,25 +30,23 @@
         ];
     }
 @endphp
+@section('title', 'আমাদের সম্পর্কে — চিল ঘর | ঘরোয়া খাবারের আসল স্বাদ')
 
+@section('description',
+    'চিল ঘর রেস্তোরাঁ — বনগ্রাম স্কুল ও কলেজের সামনে অবস্থিত একটি জনপ্রিয় ফ্যামিলি রেস্টুরেন্ট।
+    কাচ্চি, ইলিশ, ফাস্ট ফুড ও ঘরোয়া স্বাদের খাবার।')
+
+@section('keywords', 'চিল ঘর, আমাদের সম্পর্কে, রেস্টুরেন্ট, কাচ্চি, ইলিশ, ফাস্ট ফুড, বনগ্রাম')
+
+@section('og_title', 'আমাদের সম্পর্কে — চিল ঘর')
+@section('og_description', 'গ্রামীণ আন্তরিকতায় তৈরি ঘরোয়া স্বাদের রেস্টুরেন্ট চিল ঘর সম্পর্কে জানুন')
+@section('og_type', 'website')
+
+@section('twitter_title', 'চিল ঘর সম্পর্কে জানুন')
+@section('twitter_description', 'ঘরোয়া খাবারের আসল স্বাদ — চিল ঘর')
 @section('title', $pageTitle)
 
 @section('content')
-
-    {{-- Hero --}}
-    {{-- <div class="relative overflow-hidden">
-        <img src="{{ asset($heroImage) }}" alt="চিল ঘর" class="h-64 w-full object-cover brightness-40"
-            onerror="this.src='https://placehold.co/1200x400/faf6ef/c0392b?text=চিল+ঘর'">
-        <div class="absolute inset-0 bg-gradient-to-b from-charcoal/60 to-charcoal/90"></div>
-        <div class="absolute inset-0 flex items-center justify-center text-center text-white px-4">
-            <div>
-                <p class="text-xs font-bold uppercase tracking-widest text-spice mb-3">{{ $heroBadge }}</p>
-                <h1 class="font-display text-4xl font-bold sm:text-5xl">{{ $heroTitle }}</h1>
-                <p class="mt-3 text-cream/70 text-sm sm:text-base">{{ $heroSubtitle }}</p>
-            </div>
-        </div>
-    </div> --}}
-
     {{-- Story --}}
     <div class="mx-auto max-w-3xl px-4 py-14 sm:px-6 lg:px-8">
         <div class="prose-like space-y-5 text-base leading-relaxed text-charcoal/75">
