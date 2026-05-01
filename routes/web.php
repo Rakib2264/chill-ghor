@@ -93,6 +93,9 @@ Route::middleware('auth')->prefix('profile')->name('profile.')->group(function (
     Route::patch('/update', [ProfileController::class, 'update'])->name('update');
     Route::patch('/password', [ProfileController::class, 'updatePassword'])->name('password');
 
+    // ✅ Avatar AJAX upload — auth middleware এর ভেতরে, সঠিক জায়গায়
+    Route::post('/avatar', [ProfileController::class, 'updateAvatar'])->name('avatar');
+
     Route::get('/addresses', [AddressController::class, 'index'])->name('addresses.index');
     Route::post('/addresses', [AddressController::class, 'store'])->name('addresses.store');
     Route::patch('/addresses/{address}', [AddressController::class, 'update'])->name('addresses.update');
@@ -119,7 +122,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/products/update-home-order', [AdminProductController::class, 'updateHomeOrder'])
         ->name('products.update-home-order');
 
-    // Add the new home manager page route
     Route::get('/products/home-manager', [AdminProductController::class, 'homeManager'])
         ->name('products.home-manager');
 

@@ -17,7 +17,7 @@ class ProfileController extends Controller
         $recentOrders = $user->orders()->latest()->take(5)->get();
         $totalOrders = $user->orders()->count();
         $totalSpent = $user->orders()->where('status', 'delivered')->sum('total');
-        
+
         return view('pages.profile.index', compact('user', 'recentOrders', 'totalOrders', 'totalSpent'));
     }
 
@@ -27,7 +27,7 @@ class ProfileController extends Controller
             ->with('items')
             ->latest()
             ->paginate(15);
-        
+
         return view('pages.profile.orders', compact('orders'));
     }
 
@@ -36,7 +36,7 @@ class ProfileController extends Controller
         if ($order->user_id !== Auth::id() && !Auth::user()->is_admin) {
             abort(403, 'আপনার এই অর্ডার দেখার অনুমতি নেই।');
         }
-        
+
         $order->load('items.product');
         return view('pages.profile.order-detail', compact('order'));
     }
@@ -46,7 +46,7 @@ class ProfileController extends Controller
         if ($order->user_id !== Auth::id() && !Auth::user()->is_admin) {
             abort(403, 'আপনার এই অর্ডার দেখার অনুমতি নেই।');
         }
-        
+
         $order->load('items.product');
         return view('pages.profile.print-invoice', compact('order'));
     }
@@ -54,27 +54,49 @@ class ProfileController extends Controller
     public function update(Request $request)
     {
         $user = Auth::user();
-        
+
         $data = $request->validate([
-            'name'     => 'required|string|max:120',
-            'email'    => ['required', 'email', Rule::unique('users')->ignore($user->id)],
-            'phone'    => 'nullable|string|max:20',
-            'address'  => 'nullable|string|max:500',
-            'avatar'   => 'nullable|image|max:2048',
-        ], [
-            'avatar.max' => 'ছবির সাইজ ২ মেগাবাইটের বেশি হতে পারবে না',
+            'name'    => 'required|string|max:120',
+            'email'   => ['required', 'email', Rule::unique('users')->ignore($user->id)],
+            'phone'   => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:500',
         ]);
 
-        if ($request->hasFile('avatar')) {
-            if ($user->avatar) {
-                Storage::disk('public')->delete($user->avatar);
-            }
-            $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
-        }
-
+        // avatar এখন আলাদা AJAX endpoint এ — এখানে handle করব না
         $user->update($data);
 
         return back()->with('toast', '✅ আপনার প্রোফাইল আপডেট হয়েছে');
+    }
+
+    /**
+     * Avatar আপলোড — AJAX only, page reload নেই
+     */
+    public function updateAvatar(Request $request)
+    {
+        $request->validate([
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+        ], [
+            'avatar.required' => 'ছবি বেছে নিন',
+            'avatar.image'    => 'শুধু ছবি ফাইল আপলোড করা যাবে',
+            'avatar.max'      => 'ছবির সাইজ ২ মেগাবাইটের বেশি হবে না',
+        ]);
+
+        $user = Auth::user();
+
+        // পুরনো avatar মুছে দাও (default না হলে)
+        if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+            Storage::disk('public')->delete($user->avatar);
+        }
+
+        // নতুন ছবি সংরক্ষণ
+        $path = $request->file('avatar')->store('avatars', 'public');
+        $user->update(['avatar' => $path]);
+
+        return response()->json([
+            'success'    => true,
+            'avatar_url' => $user->fresh()->avatar_url,
+            'message'    => '✅ ছবি আপডেট হয়েছে',
+        ]);
     }
 
     public function updatePassword(Request $request)
@@ -84,8 +106,8 @@ class ProfileController extends Controller
             'password'         => 'required|string|min:6|confirmed',
         ], [
             'current_password.current_password' => 'বর্তমান পাসওয়ার্ড সঠিক নয়',
-            'password.min' => 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে',
-            'password.confirmed' => 'পাসওয়ার্ড মিলছে না',
+            'password.min'                      => 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে',
+            'password.confirmed'                => 'পাসওয়ার্ড মিলছে না',
         ]);
 
         Auth::user()->update(['password' => Hash::make($data['password'])]);
