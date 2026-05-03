@@ -129,7 +129,13 @@ class CheckoutController extends Controller
                 'status' => 'pending',
             ]);
 
-            if (! empty($couponSession['coupon_id'])) {
+            if (!empty($couponSession['coupon_id']) && Auth::id()) {
+                $coupon = Coupon::find($couponSession['coupon_id']);
+                if ($coupon) {
+                    $coupon->markAsUsed($order->id, Auth::id(), $discount);
+                }
+            } elseif (!empty($couponSession['coupon_id'])) {
+                // গেস্ট ইউজার হলে শুধু use_count বাড়ান
                 Coupon::where('id', $couponSession['coupon_id'])->increment('used_count');
             }
 

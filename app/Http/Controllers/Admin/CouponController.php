@@ -21,15 +21,19 @@ class CouponController extends Controller
             'label' => 'nullable|string|max:120',
             'type' => 'required|in:percent,flat',
             'value' => 'required|integer|min:1',
-            'min_order' => 'nullable|integer|min:0',
+            'min_order_amount' => 'nullable|integer|min:0',  // ✅ min_order_amount
             'max_discount' => 'nullable|integer|min:0',
             'usage_limit' => 'nullable|integer|min:1',
+            'per_user_limit' => 'nullable|integer|min:1',
+            'allow_guest' => 'nullable|boolean',
             'expires_at' => 'nullable|date',
             'is_active' => 'nullable|boolean',
         ]);
 
         $data['code'] = strtoupper($data['code']);
         $data['is_active'] = $request->boolean('is_active', true);
+        $data['allow_guest'] = $request->boolean('allow_guest', false);
+        
         Coupon::create($data);
 
         return back()->with('toast', '✅ কুপন তৈরি হয়েছে');
@@ -42,15 +46,21 @@ class CouponController extends Controller
             'label' => 'nullable|string|max:120',
             'type' => 'required|in:percent,flat',
             'value' => 'required|integer|min:1',
-            'min_order' => 'nullable|integer|min:0',
+            'min_order_amount' => 'nullable|integer|min:0',  // ✅ min_order_amount
             'max_discount' => 'nullable|integer|min:0',
             'usage_limit' => 'nullable|integer|min:1',
+            'per_user_limit' => 'nullable|integer|min:1',
+            'allow_guest' => 'nullable|boolean',
             'expires_at' => 'nullable|date',
             'is_active' => 'nullable|boolean',
         ]);
+        
         $data['code'] = strtoupper($data['code']);
         $data['is_active'] = $request->boolean('is_active', false);
+        $data['allow_guest'] = $request->boolean('allow_guest', false);
+        
         $coupon->update($data);
+        
         return back()->with('toast', '✅ কুপন আপডেট হয়েছে');
     }
 
