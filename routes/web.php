@@ -172,7 +172,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('emails/send', [AdminEmailController::class, 'create'])->name('emails.send');
     Route::post('emails/send', [AdminEmailController::class, 'send'])->name('emails.send.store');
     Route::get('emails/history', [AdminEmailController::class, 'history'])->name('emails.history');
-
+    // Inside admin group, after email history route
+    Route::get('emails/preview', [AdminEmailController::class, 'preview'])->name('emails.preview');
+    Route::post('emails/resend/{id}', [AdminEmailController::class, 'resend'])->name('emails.resend');
+    Route::get('emails/log/{id}/preview', [AdminEmailController::class, 'previewLog'])->name('emails.preview-log');
     // Advertisements
     Route::get('advertisements', [\App\Http\Controllers\Admin\AdvertisementController::class, 'index'])->name('advertisements.index');
     Route::post('advertisements', [\App\Http\Controllers\Admin\AdvertisementController::class, 'store'])->name('advertisements.store');
