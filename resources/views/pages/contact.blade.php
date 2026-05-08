@@ -252,7 +252,7 @@
                             aria-label="Facebook">
                             <i class="fa-brands fa-facebook-f" aria-hidden="true"></i>
                         </a>
-                        <a href="{{ $socialInstagram !== '#' ? $socialInstagram : '#' }}"
+                        {{-- <a href="{{ $socialInstagram !== '#' ? $socialInstagram : '#' }}"
                             @if ($socialInstagram !== '#') target="_blank" rel="noopener noreferrer" @endif
                             class="cg-soc cg-soc-ig flex h-10 w-10 items-center justify-center rounded-xl border border-charcoal/10 bg-cream text-charcoal/55 text-base"
                             aria-label="Instagram">
@@ -263,7 +263,7 @@
                             class="cg-soc cg-soc-yt flex h-10 w-10 items-center justify-center rounded-xl border border-charcoal/10 bg-cream text-charcoal/55 text-base"
                             aria-label="YouTube">
                             <i class="fa-brands fa-youtube" aria-hidden="true"></i>
-                        </a>
+                        </a> --}}
                     </div>
                 </div>
 
