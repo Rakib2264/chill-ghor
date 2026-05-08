@@ -13,7 +13,7 @@ class HomeController extends Controller
         $categories = Category::orderBy('sort_order')->get();
 
         // হোম পেজের জন্য নির্বাচিত প্রোডাক্ট
-        $homeProducts = Product::forHomePage(12)->get();
+        $homeProducts = Product::forHomePage(16)->get();
 
         // Fallback: popular products
         if ($homeProducts->isEmpty()) {
