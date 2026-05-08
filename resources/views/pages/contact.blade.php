@@ -246,7 +246,7 @@
                 <div class="rounded-2xl border border-charcoal/10 bg-white p-4 shadow-soft">
                     <div class="mb-3 text-[10px] font-bold uppercase tracking-wider text-charcoal/40">সোশ্যাল মিডিয়া</div>
                     <div class="flex gap-2">
-                        <a href="{{ $socialFacebook !== '#' ? $socialFacebook : '#' }}"
+                        <a href="{{ $socialFacebook !== '#' ? $socialFacebook : 'https://www.facebook.com/profile.php?id=61577802366899' }}"
                             @if ($socialFacebook !== '#') target="_blank" rel="noopener noreferrer" @endif
                             class="cg-soc cg-soc-fb flex h-10 w-10 items-center justify-center rounded-xl border border-charcoal/10 bg-cream text-charcoal/55 text-base"
                             aria-label="Facebook">
