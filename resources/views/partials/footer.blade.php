@@ -71,9 +71,9 @@
                     <a href="{{ $href }}" target="_blank" rel="noopener noreferrer"
                        class="group flex h-10 w-10 items-center justify-center rounded-xl bg-white/8 ring-1 ring-white/10 transition hover:bg-primary hover:ring-primary hover:-translate-y-0.5 hover:shadow-warm">
                         @if ($key == 'facebook')   <i class="fab fa-facebook-f text-cream/85 group-hover:text-white"></i>
-                        {{-- @elseif($key == 'instagram') <i class="fab fa-instagram text-cream/85 group-hover:text-white"></i>
+                        @elseif($key == 'instagram') <i class="fab fa-instagram text-cream/85 group-hover:text-white"></i>
                         @elseif($key == 'twitter')  <i class="fab fa-x-twitter text-cream/85 group-hover:text-white"></i>
-                        @elseif($key == 'youtube')  <i class="fab fa-youtube text-cream/85 group-hover:text-white"></i> --}}
+                        @elseif($key == 'youtube')  <i class="fab fa-youtube text-cream/85 group-hover:text-white"></i>
                         @endif
                     </a>
                 @endforeach
