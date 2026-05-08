@@ -23,8 +23,8 @@ class WishlistController extends Controller
 
     public function moveToCart(Product $product)
     {
-        Cart::add($product->id, 1);
+        Cart::add($product, 1); // ✅ Pass Product object, not $product->id
         Wishlist::remove($product->id);
-        return back()->with('toast', 'কার্টে সরানো হয়েছে');
+        return back()->with('toast', '🛒 কার্টে সরানো হয়েছে');
     }
 }

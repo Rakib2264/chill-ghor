@@ -74,10 +74,12 @@
                             loading="eager"
                             class="aspect-[4/3] w-full rounded-3xl object-cover ring-2 ring-white/10 shadow-glow"
                             onerror="this.src='https://placehold.co/600x450/3d2010/f5a623?text=চিল+ঘর'">
-                        <div class="absolute -bottom-3 left-3 rounded-2xl bg-white px-3 py-2 shadow-lg">
-                            <div class="font-display text-xs font-bold flex items-center gap-1.5"><i
-                                    class="fa-regular fa-clock text-primary"></i>
-                                {{ getSetting('delivery_time', '২০-৩০ মিনিট') }}</div>
+                        <div class="absolute bottom-3 left-3 z-20 rounded-2xl bg-white px-2.5 py-1.5 shadow-lg">
+                            <div
+                                class="font-display text-[11px] sm:text-xs font-bold flex items-center gap-1.5 text-gray-900">
+                                <i class="fa-regular fa-clock text-primary"></i>
+                                {{ getSetting('delivery_time', '২০-৩০ মিনিট') }}
+                            </div>
                         </div>
                         <div class="absolute -top-3 right-3 rounded-2xl px-3 py-2 shadow-lg" style="background:#f5a623;">
                             <div class="font-display text-xs font-bold text-gray-900 flex items-center gap-1.5"><i
